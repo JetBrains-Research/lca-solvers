@@ -12,7 +12,7 @@ class DatapointBase:
     completion: str | None = None
     context_len: int | None = None
 
-    def from_hf_datapoint(self, hf_dp: dict):
+    def from_hf_datapoint(self, hf_dp: dict, **kwargs):
         raise NotImplemented
 
     def check_extension(self, filename: str) -> bool:
