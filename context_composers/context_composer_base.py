@@ -5,5 +5,5 @@ class ContextComposerBase:
     def __init__(self):
         pass
 
-    def compose_context(self, datapoint: DatapointBase) -> str:
+    def compose_context(self, datapoint: DatapointBase, mode: str | None, max_length: int) -> str:
         raise NotImplementedError

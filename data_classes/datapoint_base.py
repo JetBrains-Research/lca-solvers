@@ -33,5 +33,10 @@ class DatapointBase:
     def get_completion_filenames(self) -> list[str]:
         return list(self.completion_dict)
 
+    def get_completion_file(self) -> str:
+        compl_fn = self.get_completion_filenames()
+        assert len(compl_fn) == 1, "There are multiple completion files"
+        return self.completion_dict[compl_fn[0]]
+
     def to_dict(self):
         raise NotImplementedError

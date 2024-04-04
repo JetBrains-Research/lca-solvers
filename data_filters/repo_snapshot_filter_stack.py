@@ -113,6 +113,7 @@ class SnapshotFilterStack(SnapshotFilterBase):
         return True
 
     # TODO: there is also a json/yaml filtering in the Stack paper
+    # TODO: filter out hidden files
 
     @staticmethod
     def _get_longline_exceptions() -> list[str]:
@@ -141,7 +142,7 @@ class SnapshotFilterStack(SnapshotFilterBase):
 
     @staticmethod
     def _get_text_extensions():
-        return ['.txt', '.md', '.rtf']
+        return ['.txt', '.md', '.rtf', '.rst', '.mdx']
 
     @staticmethod
     def _get_text_keywords():
