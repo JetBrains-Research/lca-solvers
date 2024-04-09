@@ -28,7 +28,7 @@ class DataLoader:
         chunked_list = [list_[chunk_size * i:chunk_size * (i + 1)] for i in range(chunk_number)]
         return chunked_list
 
-    def _get_dataset_iterator(self, chunk_size: int = 16):
+    def get_dataset_iterator(self, chunk_size: int = 16):
         fs = HfFileSystem()
 
         list_of_files = fs.ls(f"datasets/{self.hf_path}/train", detail=False)
@@ -42,7 +42,7 @@ class DataLoader:
             yield ds
 
     def get_dp_iterator(self, chunk_size: int = 16):
-        for ds in self._get_dataset_iterator(chunk_size=chunk_size):
+        for ds in self.get_dataset_iterator(chunk_size=chunk_size):
             for dp in ds:
                 yield dp
 
