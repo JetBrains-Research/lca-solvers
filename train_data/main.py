@@ -9,7 +9,7 @@ from context_composers.context_composer_path_distance import ContextComposerPath
 from data_classes.datapoint_base import DatapointBase
 from data_classes.datapoint_py import DatapointPy
 from data_filters.repo_snapshot_filter_stack import SnapshotFilterStack
-from data_processing.dataset_loading import DataLoader
+from data_loading.raw_train_dataset_loading import DataLoaderTrainRaw
 
 
 def get_datasets() -> dict[str, str]:
@@ -53,7 +53,7 @@ def main() -> None:
     ds_name = 'train'
 
     context_strategy = 'path_distance'
-    loader = DataLoader()
+    loader = DataLoaderTrainRaw()
     composer = ContextComposerPathDistance()
     filt = SnapshotFilterStack()
 

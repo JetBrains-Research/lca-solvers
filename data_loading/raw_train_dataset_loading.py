@@ -5,7 +5,7 @@ from huggingface_hub import HfFileSystem
 from tqdm.auto import tqdm
 
 
-class DataLoader:
+class DataLoaderTrainRaw:
     def __init__(self,
                  hf_path='JetBrains-Research/lca-codegen-train',
                  cache_dir='/mnt/data2/shared-data/lca/hf_cache/'
