@@ -1,4 +1,4 @@
-from data_classes.datapoint_base import DatapointBase
+from data_processing.data_classes.datapoint_base import DatapointBase
 
 
 class DatapointComposed(DatapointBase):

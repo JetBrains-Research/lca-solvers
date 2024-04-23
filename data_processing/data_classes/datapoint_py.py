@@ -1,7 +1,7 @@
 from dataclasses import asdict
 
-from data_classes.datapoint_base import DatapointBase
-from data_filters.repo_snapshot_filter_base import SnapshotFilterBase
+from data_processing.data_classes.datapoint_base import DatapointBase
+from data_processing.data_filters.repo_snapshot_filter_base import SnapshotFilterBase
 
 
 class DatapointPy(DatapointBase):

@@ -5,7 +5,7 @@ from typing import AnyStr
 
 from bs4 import BeautifulSoup
 
-from data_filters.repo_snapshot_filter_base import SnapshotFilterBase
+from data_processing.data_filters.repo_snapshot_filter_base import SnapshotFilterBase
 
 
 class SnapshotFilterStack(SnapshotFilterBase):

@@ -1,5 +1,5 @@
-from data_classes.datapoint_composed import DatapointComposed
-from data_loading.composer_train_dataset_loading import DataLoaderTrainComposed
+from data_processing.data_classes.datapoint_composed import DatapointComposed
+from data_processing.data_loading.composer_train_dataset_loading import DataLoaderTrainComposed
 
 
 def compose_input_sequence(dp: DatapointComposed, max_len: int, context_ratio: float = 0.75) -> str:

@@ -1,7 +1,7 @@
 import random
 
-from context_composers.context_composer_base import ContextComposerBase
-from data_classes.datapoint_base import DatapointBase
+from data_processing.context_composers.context_composer_base import ContextComposerBase
+from data_processing.data_classes.datapoint_base import DatapointBase
 
 
 class ContextComposerExample(ContextComposerBase):

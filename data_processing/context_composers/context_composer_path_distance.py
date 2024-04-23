@@ -1,10 +1,8 @@
 import os
-import random
 from functools import partial
-from typing import Tuple
 
-from context_composers.context_composer_base import ContextComposerBase
-from data_classes.datapoint_base import DatapointBase
+from data_processing.context_composers.context_composer_base import ContextComposerBase
+from data_processing.data_classes.datapoint_base import DatapointBase
 
 
 class ContextComposerPathDistance(ContextComposerBase):
