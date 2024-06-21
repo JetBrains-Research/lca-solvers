@@ -3,7 +3,7 @@ from lca_eval_harness.prompters.prompter_base import PrompterBase
 from lca_eval_harness.prompters.prompter_data.prompter_output import PrompterOutput
 
 
-class PrompterFileLevel(PrompterBase):
+class PrompterLongerLines(PrompterBase):
     def __init__(self,
                  **base_params,
                  # prefix_max_len: int = 10_000,
@@ -11,20 +11,23 @@ class PrompterFileLevel(PrompterBase):
                  ):
         base_params['is_cheating'] = False
         super().__init__(**base_params)
-        self.identifier = 'file_level'
+        self.identifier = 'longer_lines'
 
-    def compose_prompt(self, datapoint: DataPointBase) -> list[PrompterOutput]:
+    def compose_prompt(self, datapoint: DataPointBase, **filter_args) -> list[PrompterOutput]:
         prompts = list()
         file_prefixes, targets = datapoint.split_completion_file()
         for file_prefix, raw_target in zip(file_prefixes, targets):
             target = raw_target if len(raw_target) > 0 else None
-            prompt = file_prefix[-self.prompt_max_len:]
+            context = datapoint.context
+            context = self._filter_short_lines(context, **filter_args)
+            prompt = context + file_prefix
+            prompt = prompt[-self.prompt_max_len:]
             prompts.append(PrompterOutput(prompt=prompt, target=target))
         return prompts
 
-
-if __name__ == '__main__':
-    print('base')
-    prompter = PrompterBase()
-    print('file-level')
-    prompter_2 = PrompterFileLevel(is_cheating=False)
+    @staticmethod
+    def _filter_short_lines(code: str, min_line_len: int = 10) -> str:
+        lines = code.split('\n')
+        filtered_lines = [line for line in lines if len(line) >= min_line_len]
+        filtered_code = '\n'.join(filtered_lines)
+        return filtered_code

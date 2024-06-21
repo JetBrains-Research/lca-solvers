@@ -6,6 +6,7 @@ from lca_eval_harness.data_classes.datapoint_base import DataPointBase
 @dataclass
 class DataPointPrefixIndexes(DataPointBase):
     prefix_split_indexes: list[int]
+    # prefix_line_split_indexes: list[int]
 
     def split_completion_file(self) -> (list[str], list[str]):
         prefixes = list()

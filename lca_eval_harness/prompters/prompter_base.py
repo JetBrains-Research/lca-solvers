@@ -15,7 +15,7 @@ class PrompterBase:
         self.is_cheating = is_cheating
         self._cheating_warning()
 
-    def compose_prompt(self, datapoint: DataPointBase) -> PrompterOutput:
+    def compose_prompt(self, datapoint: DataPointBase) -> list[PrompterOutput]:
         raise NotImplementedError
 
     def _cheating_warning(self):

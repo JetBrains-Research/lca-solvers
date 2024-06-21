@@ -6,7 +6,7 @@ from vllm.lora.request import LoRARequest
 
 from lca_eval_harness.dataset_loaders.hf_data_loader import HFDataLoader
 from lca_eval_harness.eval import Evaluator
-from lca_eval_harness.model_inference.vllm_inference import VllmEngine
+from lca_eval_harness.model_inference.vllm_engine import VllmEngine
 
 model_paths = [
     f'jenyag/model_lora_v{i}' for i in range(5)

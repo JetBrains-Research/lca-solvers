@@ -6,7 +6,8 @@ import jsonlines
 from vllm import RequestOutput, SamplingParams
 
 from lca_eval_harness.dataset_loaders.hf_data_loader import HFDataLoader
-from lca_eval_harness.model_inference.vllm_inference import VllmEngine
+from lca_eval_harness.model_inference.vllm_engine import VllmEngine
+from lca_eval_harness.prompters.prompter_base import PrompterBase
 
 
 class Evaluator:
@@ -15,11 +16,13 @@ class Evaluator:
                  inference_engine: VllmEngine,
                  data_loader: HFDataLoader,
                  sampling_params: dict[str, Any],
+                 prompter: PrompterBase,
                  artifacts_path: str = 'data/eval_results',
                  ):
         self.inference_engine: VllmEngine = inference_engine
         self.data_loader: HFDataLoader = data_loader
         self.sampling_params: SamplingParams = self.inference_engine.get_sampling_params(**sampling_params)
+        self.prompter: PrompterBase = prompter
         self.prompts: list[str] | None = None
         self.targets: list[str] | None = None
         self.outputs: list[RequestOutput] | None = None
@@ -98,26 +101,27 @@ class Evaluator:
         # self.outputs = outputs
 
     def save_results(self, filename: str | None = None) -> None:
-        if self.prompts is None or self.outputs is None:
-            raise ValueError('Prompts and Outputs must not be None')
-        if len(self.prompts) != len(self.outputs):
-            raise ValueError('Prompts and Outputs must be the same length')
-        if self.targets is not None:
-            if len(self.targets) != len(self.prompts) or len(self.targets) != len(self.outputs):
-                raise ValueError('Targets must be the same length with Prompts and Outputs')
-
-        if filename is None:
-            filename = 'untitled_results.jsonl'
-        saving_path = os.path.join(self.artifacts_path, filename)
-        with jsonlines.open(saving_path, 'w') as writer:
-            for idx in range(len(self.prompts)):
-                result_dict = {
-                    'prompt': self.prompts[idx],
-                    'target': self.targets[idx] if self.targets[idx] else None,
-                    'output': self.outputs[idx].outputs[0].text,
-                    'cumulative_logprob': self.outputs[idx].outputs[0].cumulative_logprob,
-                }
-                writer.write(result_dict)
+        #
+        # if self.prompts is None or self.outputs is None:
+        #     raise ValueError('Prompts and Outputs must not be None')
+        # if len(self.prompts) != len(self.outputs):
+        #     raise ValueError('Prompts and Outputs must be the same length')
+        # if self.targets is not None:
+        #     if len(self.targets) != len(self.prompts) or len(self.targets) != len(self.outputs):
+        #         raise ValueError('Targets must be the same length with Prompts and Outputs')
+        #
+        # if filename is None:
+        #     filename = 'untitled_results.jsonl'
+        # saving_path = os.path.join(self.artifacts_path, filename)
+        # with jsonlines.open(saving_path, 'w') as writer:
+        #     for idx in range(len(self.prompts)):
+        #         result_dict = {
+        #             'prompt': self.prompts[idx],
+        #             'target': self.targets[idx] if self.targets[idx] else None,
+        #             'output': self.outputs[idx].outputs[0].text,
+        #             'cumulative_logprob': self.outputs[idx].outputs[0].cumulative_logprob,
+        #         }
+        #         writer.write(result_dict)
 
     def run(self):
         pass
