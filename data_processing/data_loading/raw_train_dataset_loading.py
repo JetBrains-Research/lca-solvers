@@ -4,12 +4,18 @@ from datasets import load_dataset, Dataset
 from huggingface_hub import HfFileSystem
 from tqdm.auto import tqdm
 
+import os
+
 
 class DataLoaderTrainRaw:
-    def __init__(self,
-                 hf_path='JetBrains-Research/lca-codegen-train',
-                 cache_dir='/mnt/data2/shared-data/lca/hf_cache/'
-                 ):
+    def __init__(self, *, hf_path: str = None, cache_dir: str = None) -> None:
+        if hf_path is None:
+            pass  # TODO
+        if cache_dir is None:
+            pass  # TODO
+
+        print(os.listdir())
+
         self.hf_path = hf_path
         self.cache_dir = cache_dir
 
@@ -31,9 +37,8 @@ class DataLoaderTrainRaw:
     def get_dataset_iterator(self, chunk_size: int = 16):
         fs = HfFileSystem()
 
-        list_of_files = fs.ls(f"datasets/{self.hf_path}/train", detail=False)
-        list_of_filenames = [fp.split('/')[-1] for fp in list_of_files]
-        # shuffle(list_of_filenames)
+        list_of_files = fs.ls(f'datasets/{self.hf_path}/train', detail=False)
+        list_of_filenames = [fp.split(fs.sep)[-1] for fp in list_of_files]
 
         list_of_filenames_by_chunks = self.make_list_chunks(list_of_filenames, chunk_size=chunk_size)
 
@@ -45,7 +50,3 @@ class DataLoaderTrainRaw:
         for ds in self.get_dataset_iterator(chunk_size=chunk_size):
             for dp in ds:
                 yield dp
-
-
-if __name__ == '__main__':
-    pass
