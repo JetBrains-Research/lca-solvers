@@ -1,0 +1,3 @@
+path: 'JetBrains-Research/lca-project-level-code-completion'
+name: 'medium_context'
+split: 'test'
