@@ -1,5 +1,46 @@
 from pipeline.context_composers.base_composers import RankingComposer
+from pipeline.data.datapoint import Datapoint
+
+import os
+import warnings
+from typing import Iterable
 
 
-class PathDistanceComposer(RankingComposer):
-    pass
+class PathDistanceComposer(RankingComposer):  # TODO: test
+    def chunk_datapoint(self, datapoint: Datapoint) -> Iterable[str]:
+        return [
+            self.config.path_comment_template.format(filename=fn, content=cnt)
+            for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
+        ]
+
+    @staticmethod
+    def _path_distance(path_from: str, path_to: str) -> int:
+        path_from = os.path.normpath(path_from)
+        path_to = os.path.normpath(path_to)
+
+        if path_from == path_to:
+            warnings.warn(f'Data leak: the {path_from} completion file is contained in the repo snapshot.')
+
+        divided_path_from = path_from.split(os.path.sep)
+        divided_path_to = path_to.split(os.path.sep)
+
+        common_len = 0
+        for segment_from, segment_to in zip(divided_path_from, divided_path_to):
+            if segment_from == segment_to:
+                common_len += 1
+            else:
+                break
+
+        n_residuals_from = len(divided_path_from) - common_len - 1
+        n_residuals_to = len(divided_path_to) - common_len - 1
+
+        return n_residuals_from + n_residuals_to
+
+    def ranking_function(self,
+                         _chunks: Iterable[str],
+                         datapoint: Datapoint | None = None,
+                         ) -> Iterable[int | float]:
+        return map(
+            lambda x: -self._path_distance(x, datapoint.completion_file['filename']),
+            datapoint.repo_snapshot['filename'],
+        )

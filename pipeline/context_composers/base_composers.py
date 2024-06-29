@@ -36,7 +36,7 @@ class RankingComposer(GrainedComposer):
     def compose_context(self, datapoint: Datapoint) -> str:
         chunks = self.chunk_datapoint(datapoint)
         ranks = self.ranking_function(chunks, datapoint)
-        chunks = [chunk for _, chunk in sorted(zip(ranks, chunks), key=lambda x: -x[0])]
+        chunks = [chunk for _, chunk in sorted(zip(ranks, chunks), key=lambda x: x[0])]
 
         context = self.combine_chunks(chunks)
         context += self.config.path_comment_template.format(**datapoint.completion_file)
