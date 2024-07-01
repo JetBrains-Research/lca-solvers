@@ -1,4 +1,4 @@
-pre_context_prompt: ''
-chunks_sep: \n\n
-post_context_prompt: \n\n
-path_comment_template: '# {filename}\n{content}'
+pre_context_prompt: "# Repo identifier: {}\n"
+chunks_sep: "\n\n"
+post_context_prompt: "\n\n"
+path_comment_template: "# {filename}\n{content}"

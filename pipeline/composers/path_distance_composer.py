@@ -1,4 +1,4 @@
-from pipeline.context_composers.base_composers import RankingComposer
+from pipeline.composers.base_composers import RankingComposer
 from pipeline.data.datapoint import Datapoint
 
 import os
@@ -7,6 +7,9 @@ from typing import Iterable
 
 
 class PathDistanceComposer(RankingComposer):  # TODO: test
+    def compose_completion(self, datapoint: Datapoint) -> str:
+        return self.config.path_comment_template.format(**datapoint.completion_file)
+
     def chunk_datapoint(self, datapoint: Datapoint) -> Iterable[str]:
         return [
             self.config.path_comment_template.format(filename=fn, content=cnt)
@@ -36,10 +39,7 @@ class PathDistanceComposer(RankingComposer):  # TODO: test
 
         return n_residuals_from + n_residuals_to
 
-    def ranking_function(self,
-                         _chunks: Iterable[str],
-                         datapoint: Datapoint | None = None,
-                         ) -> Iterable[int | float]:
+    def ranking_function(self, _chunks: Iterable[str], datapoint: Datapoint) -> Iterable[int | float]:
         return map(
             lambda x: -self._path_distance(x, datapoint.completion_file['filename']),
             datapoint.repo_snapshot['filename'],

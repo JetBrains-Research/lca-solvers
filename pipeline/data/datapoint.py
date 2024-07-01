@@ -29,6 +29,3 @@ class Datapoint:
     completion_lines: CompletionLines
     repo_snapshot: RepoSnapshot
     completion_lines_raw: CompletionLines
-
-    context: str | None = None
-    completion: str | None = None
