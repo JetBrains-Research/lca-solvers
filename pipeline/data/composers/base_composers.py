@@ -34,7 +34,7 @@ class ComposerBase(abc.ABC):
             composed_completion=self.compose_completion(datapoint),
         )
 
-    def compose_dataset(self,
+    def compose_dataset(self,  # TODO: tune args
                         dataset: Dataset,
                         writer_batch_size: int = 100,
                         num_proc: int = 4,

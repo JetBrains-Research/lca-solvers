@@ -1,4 +1,4 @@
-from pipeline.composers.base_composers import RankingComposer
+from pipeline.data.composers.base_composers import RankingComposer
 from pipeline.data.datapoint import Datapoint
 
 import os

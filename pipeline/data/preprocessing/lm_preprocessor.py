@@ -52,7 +52,7 @@ class LMPreprocessor(PreprocessorBase):
                           'due to an underestimation of the length of the truncated character sequence.')
 
     def get_loss_mask(self, batch_size: int = 1) -> torch.Tensor:
-        # can be easily overridden by subclasses
+        # justification: can be easily overridden by subclasses
         return self._loss_mask.expand(batch_size, -1)
 
     def tokenize_pre_context_prompt(self, prompts: list[str]) -> BatchEncoding:
