@@ -22,8 +22,8 @@ class LMPreprocessor(PreprocessorBase):
                  max_seq_len: int,
                  context_tokens: int | float,
                  loss_ratio: float,
-                 n_chars_per_token: int = 4,
-                 verbose: int = 1,
+                 n_chars_per_token: int,
+                 verbose: int,
                  ) -> None:
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len

@@ -19,7 +19,7 @@ def get_free_device(used_memory_upper_bound: float = 0.001) -> torch.device:
         if not gpu_pid_stats and mem_used / mem_total <= used_memory_upper_bound:
             return torch.device(f'cuda:{gpu_index}')
 
-    warnings.warn('No CUDA devices were found. The CPU will be used.')
+    warnings.warn('No CUDA devices were found. CPU will be used.')
     return torch.device('cpu')
 
 
@@ -31,7 +31,7 @@ def get_optimal_dtype() -> torch.dtype:
 
 
 @dataclass
-class TrainingConfig:  # TODO: default values
+class FullFineTuningTrainerConfig:  # TODO: default values
     # Iteration parameters
     max_iters: int
     valid_freq: int
@@ -51,11 +51,16 @@ class TrainingConfig:  # TODO: default values
     lr_decay_iters: int
     min_lr: float
 
+    # Train-validation split (see train_test_split function in pipeline/data/dataset.py)
+    valid_size: int  # TODO: dv: 128
+    upper_bound_per_repo: int  # TODO: dv: 5
+    random_seed_split: int | None
+
     # DataLoader
     shuffle: bool
     drop_last: bool
     num_workers: int
-    random_seed: int
+    random_seed_dl: int | None
 
     # Hardware
     device: torch.device = get_free_device()

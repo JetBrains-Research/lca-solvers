@@ -1,4 +1,3 @@
-from pipeline.configs.composer_config import ComposerConfig
 from pipeline.data.composed_datapoint import ComposedDatapoint
 from pipeline.data.datapoint import Datapoint
 
@@ -9,14 +8,22 @@ from datasets import Dataset
 
 
 class ComposerBase(abc.ABC):
-    def __init__(self, config: ComposerConfig) -> None:
-        self.config = config
+    def __init__(self,
+                 pre_context_prompt: str,
+                 chunks_sep: str,
+                 post_context_prompt: str,
+                 path_comment_template: str,
+                 ) -> None:
+        self.pre_context_prompt = pre_context_prompt
+        self.chunks_sep = chunks_sep
+        self.post_context_prompt = post_context_prompt
+        self.path_comment_template = path_comment_template
 
     def get_pre_context_prompt(self, datapoint: Datapoint) -> str:
-        return self.config.pre_context_prompt.format(datapoint.repo)
+        return self.pre_context_prompt.format(datapoint.repo)
 
     def get_post_context_prompt(self, _datapoint: Datapoint) -> str:
-        return self.config.post_context_prompt
+        return self.post_context_prompt
 
     @abc.abstractmethod
     def compose_context(self, datapoint: Datapoint) -> str:
@@ -56,7 +63,7 @@ class GrainedComposer(ComposerBase):
         raise NotImplementedError
 
     def combine_chunks(self, chunks: Iterable[str]) -> str:
-        return self.config.chunks_sep.join(chunks)
+        return self.chunks_sep.join(chunks)
 
 
 class RankingComposer(GrainedComposer):

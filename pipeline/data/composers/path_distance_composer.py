@@ -8,11 +8,11 @@ from typing import Iterable
 
 class PathDistanceComposer(RankingComposer):  # TODO: test
     def compose_completion(self, datapoint: Datapoint) -> str:
-        return self.config.path_comment_template.format(**datapoint.completion_file)
+        return self.path_comment_template.format(**datapoint.completion_file)
 
     def chunk_datapoint(self, datapoint: Datapoint) -> Iterable[str]:
         return [
-            self.config.path_comment_template.format(filename=fn, content=cnt)
+            self.path_comment_template.format(filename=fn, content=cnt)
             for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
         ]
 
