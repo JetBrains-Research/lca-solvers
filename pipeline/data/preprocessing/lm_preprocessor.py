@@ -21,7 +21,7 @@ class LMPreprocessor(PreprocessorBase):
                  tokenizer: PreTrainedTokenizerBase,
                  max_seq_len: int,
                  context_tokens: int | float,
-                 loss_ratio: float,
+                 loss_ratio: float,  # TODO: check edge cases - (0, 1]
                  n_chars_per_token: int,
                  verbose: int,
                  ) -> None:

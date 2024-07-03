@@ -1,11 +1,10 @@
-from dataclasses import dataclass
+from pipeline.configs.config_base import Config
 
-from transformers import PreTrainedTokenizerBase
+from dataclasses import dataclass
 
 
 @dataclass
-class LMPreprocessorConfig:
-    tokenizer: PreTrainedTokenizerBase
+class LMPreprocessorConfig(Config):
     max_seq_len: int
     context_tokens: int | float
     loss_ratio: float

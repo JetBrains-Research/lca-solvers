@@ -1,11 +1,13 @@
+from pipeline.configs.config_base import Config
+
 from dataclasses import dataclass
 
 
 @dataclass
-class LoggerConfig:
+class LoggerConfig(Config):
     freq: int
 
 
 @dataclass
-class WandbLoggerConfig:
+class WandbLoggerConfig(Config):
     pass

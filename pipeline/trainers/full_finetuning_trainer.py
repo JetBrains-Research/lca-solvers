@@ -1,7 +1,7 @@
 from pipeline.data.composers.base_composers import ComposerBase
 from pipeline.data.preprocessing.preprocessor_base import PreprocessorBase
 from pipeline.outputs.checkpointing import ModelCheckpointBase
-from pipeline.outputs.logger import LoggerBase
+from pipeline.outputs.loggers import LoggerBase
 from pipeline.trainers.trainer_base import TrainerBase
 
 import torch

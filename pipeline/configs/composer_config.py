@@ -1,19 +1,11 @@
-from __future__ import annotations
-from dataclasses import dataclass, asdict
+from pipeline.configs.config_base import Config
 
-import yaml
+from dataclasses import dataclass
 
 
 @dataclass
-class ComposerConfig:
+class ComposerConfig(Config):
     pre_context_prompt: str
     chunks_sep: str
     post_context_prompt: str
     path_comment_template: str
-
-    dict = property(asdict)
-
-    @staticmethod
-    def from_yaml(path: str = 'configs/composers/standard.yaml') -> ComposerConfig:
-        with open(path) as stream:
-            return ComposerConfig(**yaml.safe_load(stream))

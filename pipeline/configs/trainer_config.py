@@ -1,3 +1,5 @@
+from pipeline.configs.config_base import Config
+
 import subprocess
 import warnings
 from dataclasses import dataclass
@@ -31,8 +33,8 @@ def get_optimal_dtype() -> torch.dtype:
 
 
 @dataclass
-class FullFineTuningTrainerConfig:  # TODO: default values
-    # Iteration parameters
+class FullFineTuningTrainerConfig(Config):
+
     max_iters: int
     valid_freq: int
     gradient_accumulation_steps: int
@@ -52,8 +54,8 @@ class FullFineTuningTrainerConfig:  # TODO: default values
     min_lr: float
 
     # Train-validation split (see train_test_split function in pipeline/data/dataset.py)
-    valid_size: int  # TODO: dv: 128
-    upper_bound_per_repo: int  # TODO: dv: 5
+    valid_size: int
+    upper_bound_per_repo: int
     random_seed_split: int | None
 
     # DataLoader

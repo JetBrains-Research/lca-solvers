@@ -1,4 +1,3 @@
-# TODO: manage imports
 from pipeline.configs.dataset_config import DatasetConfig
 
 import math
