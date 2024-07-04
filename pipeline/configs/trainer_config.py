@@ -1,4 +1,5 @@
 from pipeline.configs.config_base import Config
+from pipeline.outputs.metrics.metrics_registry import MetricName
 
 import subprocess
 import warnings
@@ -34,9 +35,9 @@ def get_optimal_dtype() -> torch.dtype:
 
 @dataclass
 class FullFineTuningTrainerConfig(Config):
-
+    # Iteration parameters
     max_iters: int
-    valid_freq: int
+    valid_freq: int | None  # None means no validation at all
     gradient_accumulation_steps: int
     micro_batch_size: int
 
@@ -54,9 +55,13 @@ class FullFineTuningTrainerConfig(Config):
     min_lr: float
 
     # Train-validation split (see train_test_split function in pipeline/data/dataset.py)
-    valid_size: int
+    valid_size: int  # 0 means no validation at all
     upper_bound_per_repo: int
     random_seed_split: int | None
+
+    # Metrics (see METRICS_REGISTRY in pipeline/outputs/metrics/metrics_registry.py)
+    train_metrics: list[MetricName]
+    valid_metrics: list[MetricName]  # empty list means no validation at all
 
     # DataLoader
     shuffle: bool

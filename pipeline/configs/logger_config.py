@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class LoggerConfig(Config):
+class LocalLoggerConfig(Config):
     freq: int
 
 

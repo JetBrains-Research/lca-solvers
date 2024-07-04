@@ -22,6 +22,9 @@ valid_size: 128
 upper_bound_per_repo: 5
 random_seed_split: 1337
 
+train_metrics: []
+valid_metrics: []
+
 # DataLoader
 shuffle: True
 drop_last: False

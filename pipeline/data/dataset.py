@@ -8,6 +8,7 @@ from typing import Literal
 from datasets import load_dataset, Dataset
 
 
+# TODO: revise this function
 def config2dataset(config: DatasetConfig | Literal['train', 'small', 'medium', 'large', 'huge']) -> Dataset:
     if not isinstance(config, DatasetConfig):
         config = DatasetConfig.from_yaml(DatasetConfig.get_path2config(config))
@@ -15,7 +16,7 @@ def config2dataset(config: DatasetConfig | Literal['train', 'small', 'medium', '
 
 
 def train_test_split(dataset: Dataset,
-                     test_size: float | int = 128,
+                     test_size: int | float = 128,
                      upper_bound_per_repo: int = 5,
                      random_seed: int | None = None,
                      ) -> tuple[Dataset, Dataset]:

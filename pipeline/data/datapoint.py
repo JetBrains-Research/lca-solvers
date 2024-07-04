@@ -7,7 +7,7 @@ class CompletionFile(TypedDict):
     content: str
 
 
-class CompletionLines(TypedDict):
+class CompletionLines(TypedDict, total=False):
     commited: list[int]
     common: list[int]
     infile: list[int]
@@ -15,6 +15,7 @@ class CompletionLines(TypedDict):
     non_informative: list[int]
     random: list[int]
     other: list[int]
+
 
 class RepoSnapshot(TypedDict):
     filename: list[str]

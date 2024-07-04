@@ -5,7 +5,7 @@ class LoggerBase(abc.ABC):
     pass
 
 
-class Logger(LoggerBase):
+class LocalLogger(LoggerBase):
     pass
 
 

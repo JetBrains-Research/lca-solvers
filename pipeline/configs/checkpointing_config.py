@@ -1,15 +1,11 @@
 from pipeline.configs.config_base import Config
+from pipeline.outputs.checkpointing import LoadingMode
 
 from dataclasses import dataclass
 
 
 @dataclass
 class ModelCheckpointConfig(Config):
+    init_from: LoadingMode
     freq: int
-    directory: str
-    init_from: str | None = None
-
-
-@dataclass
-class TopKModelCheckpointConfig(Config):
-    pass
+    directory: str = 'checkpoints'

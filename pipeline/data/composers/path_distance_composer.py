@@ -7,15 +7,6 @@ from typing import Iterable
 
 
 class PathDistanceComposer(RankingComposer):  # TODO: test
-    def compose_completion(self, datapoint: Datapoint) -> str:
-        return self.path_comment_template.format(**datapoint.completion_file)
-
-    def chunk_datapoint(self, datapoint: Datapoint) -> Iterable[str]:
-        return [
-            self.path_comment_template.format(filename=fn, content=cnt)
-            for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
-        ]
-
     @staticmethod
     def _path_distance(path_from: str, path_to: str) -> int:
         path_from = os.path.normpath(path_from)
