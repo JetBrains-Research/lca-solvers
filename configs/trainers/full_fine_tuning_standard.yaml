@@ -17,11 +17,7 @@ warmup_iters: 2000
 lr_decay_iters: 60_000
 min_lr: 6.0e-5
 
-# Train-validation split
-valid_size: 128
-upper_bound_per_repo: 5
-random_seed_split: 1337
-
+# Metrics
 train_metrics: []
 valid_metrics: []
 

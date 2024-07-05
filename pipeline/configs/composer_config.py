@@ -1,10 +1,10 @@
-from pipeline.configs.config_base import Config
+from pipeline.configs.config_base import ConfigBase
 
 from dataclasses import dataclass
 
 
 @dataclass
-class ComposerConfig(Config):
+class ComposerConfig(ConfigBase):
     pre_context_prompt: str
     chunks_sep: str
     post_context_prompt: str

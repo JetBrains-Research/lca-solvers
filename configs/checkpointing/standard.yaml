@@ -1,0 +1,3 @@
+init_from: resume
+saving_freq: 100
+main_metric: cross_entropy

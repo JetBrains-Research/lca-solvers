@@ -1,13 +1,22 @@
-from typing import Callable
+from dataclasses import dataclass
+from typing import Callable, Literal
 
 import torch
 
 MetricName = str
 MetricValue = int | float
-MetricDefinition = Callable[
-    [dict[str, torch.Tensor]],  # e.g. LMBatch
-    MetricValue | torch.Tensor,  # tensor with metric values
-]
 
-METRICS_REGISTRY: dict[MetricName, MetricDefinition] = {
+
+@dataclass
+class MetricMetainfo:
+    name: MetricName
+    definition: Callable[
+        [dict[str, torch.Tensor]],  # e.g. LMBatch
+        MetricValue | torch.Tensor,  # tensor with metric values
+    ]
+    mode: Literal['minimization', 'maximization']
+
+
+METRICS_REGISTRY: dict[MetricName, MetricMetainfo] = {
+    'cross_entropy': ...,  # TODO
 }

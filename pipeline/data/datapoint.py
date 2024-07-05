@@ -29,4 +29,4 @@ class Datapoint:
     completion_file: CompletionFile
     completion_lines: CompletionLines
     repo_snapshot: RepoSnapshot
-    completion_lines_raw: CompletionLines
+    completion_lines_raw: CompletionLines | None = None

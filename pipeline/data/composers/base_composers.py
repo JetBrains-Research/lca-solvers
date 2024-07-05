@@ -7,6 +7,7 @@ from typing import Any, Iterable
 from datasets import Dataset
 
 
+# TODO: cache results?
 class ComposerBase(abc.ABC):
     def __init__(self,
                  pre_context_prompt: str,
@@ -57,9 +58,9 @@ class ComposerBase(abc.ABC):
             completion_lines=datapoint.completion_lines,
         )
 
-    def compose_dataset(self,  # TODO: tune args
+    def compose_dataset(self,
                         dataset: Dataset,
-                        writer_batch_size: int = 100,
+                        writer_batch_size: int = 128,
                         num_proc: int = 4,
                         **map_kwargs,
                         ) -> Dataset:

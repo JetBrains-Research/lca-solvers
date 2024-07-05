@@ -1,10 +1,10 @@
-from pipeline.configs.config_base import Config
+from pipeline.configs.config_base import ConfigBase
 
 from dataclasses import dataclass
 
 
 @dataclass
-class LMPreprocessorConfig(Config):
+class LMPreprocessorConfig(ConfigBase):
     max_seq_len: int
     context_tokens: int | float
     loss_ratio: float

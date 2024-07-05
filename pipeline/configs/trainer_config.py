@@ -1,4 +1,4 @@
-from pipeline.configs.config_base import Config
+from pipeline.configs.config_base import ConfigBase
 from pipeline.outputs.metrics.metrics_registry import MetricName
 
 import subprocess
@@ -34,7 +34,7 @@ def get_optimal_dtype() -> torch.dtype:
 
 
 @dataclass
-class FullFineTuningTrainerConfig(Config):
+class FullFineTuningTrainerConfig(ConfigBase):
     # Iteration parameters
     max_iters: int
     valid_freq: int | None  # None means no validation at all
@@ -50,14 +50,9 @@ class FullFineTuningTrainerConfig(Config):
 
     # Cosine lr scheduler with warmup
     decay_lr: bool
-    warmup_iters: int
-    lr_decay_iters: int
-    min_lr: float
-
-    # Train-validation split (see train_test_split function in pipeline/data/dataset.py)
-    valid_size: int  # 0 means no validation at all
-    upper_bound_per_repo: int
-    random_seed_split: int | None
+    warmup_iters: int | None
+    lr_decay_iters: int | None
+    min_lr: float | None
 
     # Metrics (see METRICS_REGISTRY in pipeline/outputs/metrics/metrics_registry.py)
     train_metrics: list[MetricName]
@@ -72,4 +67,3 @@ class FullFineTuningTrainerConfig(Config):
     # Hardware
     device: torch.device = get_free_device()
     dtype: torch.dtype = get_optimal_dtype()
-    compile: bool = True

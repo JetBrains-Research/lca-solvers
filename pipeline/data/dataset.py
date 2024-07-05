@@ -1,25 +1,15 @@
-from pipeline.configs.dataset_config import DatasetConfig
-
 import math
 import random
 from collections import defaultdict
-from typing import Literal
 
-from datasets import load_dataset, Dataset
-
-
-# TODO: revise this function
-def config2dataset(config: DatasetConfig | Literal['train', 'small', 'medium', 'large', 'huge']) -> Dataset:
-    if not isinstance(config, DatasetConfig):
-        config = DatasetConfig.from_yaml(DatasetConfig.get_path2config(config))
-    return load_dataset(**config.dict)
+from datasets import Dataset
 
 
 def train_test_split(dataset: Dataset,
-                     test_size: int | float = 128,
-                     upper_bound_per_repo: int = 5,
-                     random_seed: int | None = None,
-                     ) -> tuple[Dataset, Dataset]:
+                     test_size: int | float,  # TODO: edge case - 0
+                     upper_bound_per_repo: int,
+                     random_seed: int | None,
+                     ) -> tuple[Dataset, Dataset | None]:
 
     queue = defaultdict(list)
     repos_enum = list(enumerate(dataset['repo']))

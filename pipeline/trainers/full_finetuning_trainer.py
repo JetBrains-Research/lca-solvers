@@ -1,44 +1,49 @@
-from pipeline.data.composers.base_composers import ComposerBase
-from pipeline.data.preprocessing.preprocessor_base import PreprocessorBase
-from pipeline.outputs.checkpointing import ModelCheckpointBase
+from pipeline.outputs.checkpointing import CheckpointManager
 from pipeline.outputs.loggers import LoggerBase
+from pipeline.outputs.metrics.metrics_registry import MetricName
 from pipeline.trainers.trainer_base import TrainerBase
 
 import torch
+import torch.nn as nn
 from datasets import Dataset
+from transformers import PreTrainedTokenizerBase
 
 
 class FullFineTuningTrainer(TrainerBase):
     def __init__(self,
-                 dataset: Dataset,
-                 # main objects
-                 composer: ComposerBase,
-                 preprocessor: PreprocessorBase,
-                 checkpointer: ModelCheckpointBase,
+                 model: nn.Module,
+                 tokenizer: PreTrainedTokenizerBase,
+                 train_ds: Dataset,
+                 valid_ds: Dataset | None,
+                 # auxiliary objects
+                 checkpointer: CheckpointManager,
                  logger: LoggerBase,
-                 # training config
+                 # iteration parameters
                  max_iters: int,
                  valid_freq: int,
                  gradient_accumulation_steps: int,
                  micro_batch_size: int,
+                 # optimizer
                  learning_rate: float,
                  beta_1: float,
                  beta_2: float,
                  weight_decay: float,
                  max_grad_norm: float,
+                 # scheduler
                  decay_lr: bool,
-                 warmup_iters: int,
-                 lr_decay_iters: int,
-                 min_lr: float,
-                 valid_size: int,
-                 upper_bound_per_repo: int,
-                 random_seed_split: int | None,
+                 warmup_iters: int | None,
+                 lr_decay_iters: int | None,
+                 min_lr: float | None,
+                 # metrics
+                 train_metrics: list[MetricName],
+                 valid_metrics: list[MetricName],
+                 # DataLoader
                  shuffle: bool,
                  drop_last: bool,
                  num_workers: int,
                  random_seed_dl: int | None,
+                 # hardware
                  device: torch.device,
                  dtype: torch.dtype,
-                 compile: bool,  # noqa: built-in function that won't be used
                  ) -> None:
         pass
