@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from pipeline.configs.checkpointing_config import CheckpointManagerConfig
 from pipeline.outputs.metrics.metrics_registry import MetricName, MetricValue, METRICS_REGISTRY
 
 import json
 import os
 import warnings
-from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
+from typing import Callable
 
 import torch
-import torch.nn as nn
-from torch.optim import AdamW
+from transformers import PreTrainedModel
 
 
 class LoadingMode(str, Enum):
@@ -24,7 +22,7 @@ class LoadingMode(str, Enum):
 @dataclass
 class Checkpoint:
     iteration_number: int
-    model_state: OrderedDict[str, torch.Tensor]
+    model: PreTrainedModel
     optimizer_state: dict
     metrics: dict[MetricName, MetricValue]
 
@@ -36,7 +34,8 @@ class CheckpointManager:
                  main_metric: MetricName,
                  directory: str,
                  checkpoint_directory_template: str,
-                 model_state_filename: str,
+                 extract_iteration_number: Callable[[str], int],
+                 model_subdirectory: str,
                  optim_state_filename: str,
                  metrics_filename: str,
                  ) -> None:
@@ -44,12 +43,13 @@ class CheckpointManager:
             raise ValueError('The specified main_metric is not contained in the registry.')
 
         self.init_from = init_from
-        self.saving_freq = saving_freq
+        self.saving_freq = saving_freq  # TODO: use
         self.main_metric = METRICS_REGISTRY[main_metric]
         self.directory = directory
 
         self._checkpoint_directory_template = checkpoint_directory_template
-        self._model_state_filename = model_state_filename
+        self._extract_iteration_number = extract_iteration_number
+        self._model_subdirectory = model_subdirectory
         self._optim_state_filename = optim_state_filename
         self._metrics_filename = metrics_filename
 
@@ -75,7 +75,7 @@ class CheckpointManager:
             case LoadingMode.RESUME:
                 return max(
                     os.listdir(self.directory),
-                    key=CheckpointManagerConfig.extract_iteration_number,
+                    key=self._extract_iteration_number,
                     default=None,
                 )
             case LoadingMode.BEST:
@@ -90,17 +90,18 @@ class CheckpointManager:
     def get_iteration_number(self) -> int | None:
         checkpoint_dir = self.get_checkpoint_directory()
         if checkpoint_dir is not None:
-            return CheckpointManagerConfig.extract_iteration_number(checkpoint_dir)
+            return self._extract_iteration_number(checkpoint_dir)
         else:
             return None
 
-    def init_model(self, model: nn.Module) -> None:
+    def get_model_subdirectory(self) -> str | None:
         checkpoint_dir = self.get_checkpoint_directory()
         if checkpoint_dir is not None:
-            model_file = os.path.join(checkpoint_dir, self._model_state_filename)
-            model.load_state_dict(torch.load(model_file))
+            return os.path.join(checkpoint_dir, self._model_subdirectory)
+        else:
+            return None
 
-    def init_optimizer(self, optimizer: AdamW) -> None:
+    def init_optimizer(self, optimizer: torch.optim.AdamW) -> None:
         checkpoint_dir = self.get_checkpoint_directory()
         if checkpoint_dir is not None:
             optim_file = os.path.join(checkpoint_dir, self._optim_state_filename)
@@ -116,12 +117,12 @@ class CheckpointManager:
         if os.path.exists(checkpoint_dir):
             warnings.warn(f'The contents of the checkpoint {checkpoint_dir} have been overwritten.')
 
-        model_file, optim_file, metrics_file = map(
+        model_save_dir, optim_file, metrics_file = map(
             lambda x: os.path.join(checkpoint_dir, x),
-            [self._model_state_filename, self._optim_state_filename, self._metrics_filename],
+            [self._model_subdirectory, self._optim_state_filename, self._metrics_filename],
         )
 
-        torch.save(checkpoint.model_state, model_file)
+        checkpoint.model.save_pretrained(model_save_dir)
         torch.save(checkpoint.optimizer_state, optim_file)
 
         with open(metrics_file, 'w') as stream:

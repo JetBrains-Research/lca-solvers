@@ -1,36 +1,7 @@
 from pipeline.configs.config_base import ConfigBase
 from pipeline.outputs.metrics.metrics_registry import MetricName
 
-import subprocess
-import warnings
 from dataclasses import dataclass
-
-import torch
-
-
-def get_free_device(used_memory_upper_bound: float = 0.001) -> torch.device:
-    for gpu_index in range(torch.cuda.device_count()):
-        gpu_pid_stats = subprocess.check_output([
-            'nvidia-smi', f'-i={gpu_index}', '--query-compute-apps=pid', '--format=csv,noheader',
-        ], encoding='utf-8')
-        gpu_mem_stats = subprocess.check_output([
-            'nvidia-smi', f'-i={gpu_index}', '--query-gpu=memory.used,memory.total', '--format=csv,noheader',
-        ], encoding='utf-8')
-
-        mem_used, mem_total = map(int, gpu_mem_stats.replace('MiB', '').split(', '))
-
-        if not gpu_pid_stats and mem_used / mem_total <= used_memory_upper_bound:
-            return torch.device(f'cuda:{gpu_index}')
-
-    warnings.warn('No CUDA devices were found. CPU will be used.')
-    return torch.device('cpu')
-
-
-def get_optimal_dtype() -> torch.dtype:
-    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
-        return torch.bfloat16
-    else:
-        return torch.float16
 
 
 @dataclass
@@ -63,7 +34,3 @@ class FullFineTuningTrainerConfig(ConfigBase):
     drop_last: bool
     num_workers: int
     random_seed_dl: int | None
-
-    # Hardware
-    device: torch.device = get_free_device()
-    dtype: torch.dtype = get_optimal_dtype()

@@ -42,8 +42,5 @@ class FullFineTuningTrainer(TrainerBase):
                  drop_last: bool,
                  num_workers: int,
                  random_seed_dl: int | None,
-                 # hardware
-                 device: torch.device,
-                 dtype: torch.dtype,
                  ) -> None:
         pass
