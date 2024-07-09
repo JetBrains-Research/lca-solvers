@@ -20,7 +20,6 @@ class FullFineTuningTrainerConfig(ConfigBase):
     max_grad_norm: float
 
     # Cosine lr scheduler with warmup
-    decay_lr: bool
     warmup_iters: int | None
     lr_decay_iters: int | None
     min_lr: float | None
@@ -33,4 +32,4 @@ class FullFineTuningTrainerConfig(ConfigBase):
     shuffle: bool
     drop_last: bool
     num_workers: int
-    random_seed_dl: int | None
+    random_seed: int | None

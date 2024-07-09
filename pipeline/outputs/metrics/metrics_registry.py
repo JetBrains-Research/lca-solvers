@@ -10,7 +10,7 @@ MetricValue = int | float
 @dataclass
 class MetricMetainfo:
     name: MetricName
-    definition: Callable[
+    definition: Callable[  # TODO: what about logits
         [dict[str, torch.Tensor]],  # e.g. LMBatch
         MetricValue | torch.Tensor,  # tensor with metric values
     ]

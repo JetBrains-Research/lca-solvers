@@ -8,5 +8,5 @@ class LMPreprocessorConfig(ConfigBase):
     max_seq_len: int
     context_tokens: int | float
     loss_ratio: float
-    n_chars_per_token: int = 4
+    num_chars_per_token: int = 6
     verbose: int = 1

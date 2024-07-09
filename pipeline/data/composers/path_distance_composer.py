@@ -25,10 +25,10 @@ class PathDistanceComposer(RankingComposer):  # TODO: test
             else:
                 break
 
-        n_residuals_from = len(divided_path_from) - common_len - 1
-        n_residuals_to = len(divided_path_to) - common_len - 1
+        num_residuals_from = len(divided_path_from) - common_len - 1
+        num_residuals_to = len(divided_path_to) - common_len - 1
 
-        return n_residuals_from + n_residuals_to
+        return num_residuals_from + num_residuals_to
 
     def ranking_function(self, _chunks: Iterable[str], datapoint: Datapoint) -> Iterable[int | float]:
         return map(

@@ -31,11 +31,11 @@ def train_test_split(dataset: Dataset,
 
     while cur_test_size != test_size:
         repo, ids = queue.pop()
-        n_new_samples = min(upper_bound_per_repo, test_size - cur_test_size, len(ids))
+        num_new_samples = min(upper_bound_per_repo, test_size - cur_test_size, len(ids))
 
         test_repos.add(repo)
-        test_repos_ids.extend(ids[:n_new_samples])
-        cur_test_size += n_new_samples
+        test_repos_ids.extend(ids[:num_new_samples])
+        cur_test_size += num_new_samples
 
     train_ds = dataset.filter(lambda x: x['repo'] not in test_repos)
     test_ds = dataset.select(test_repos_ids)

@@ -87,12 +87,12 @@ class CheckpointManager:
             case _:  # user-defined checkpoint directory
                 return self.init_from
 
-    def get_iteration_number(self) -> int | None:
+    def get_iteration_number(self) -> int:
         checkpoint_dir = self.get_checkpoint_directory()
         if checkpoint_dir is not None:
             return self._extract_iteration_number(checkpoint_dir)
         else:
-            return None
+            return 0
 
     def get_model_subdirectory(self) -> str | None:
         checkpoint_dir = self.get_checkpoint_directory()
