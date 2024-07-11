@@ -6,38 +6,42 @@ from datasets import Dataset
 
 
 def train_test_split(dataset: Dataset,
-                     test_size: int | float,  # TODO: edge case - 0
+                     test_size: int,  # TODO: edge case - 0
                      upper_bound_per_repo: int,
                      random_seed: int | None,
                      ) -> tuple[Dataset, Dataset | None]:
-
+    generator = random.Random(random_seed)
     queue = defaultdict(list)
     repos_enum = list(enumerate(dataset['repo']))
-    random.Random(random_seed).shuffle(repos_enum)
+    generator.shuffle(repos_enum)
 
     for idx, repo in repos_enum:
         queue[repo].append(idx)
 
     queue = list(queue.items())
-    random.Random(random_seed).shuffle(queue)
+    generator.shuffle(queue)
     # TODO: test correlation on number of samples per repo and its position in queue - must be 0
 
-    if isinstance(test_size, float):
-        test_size = math.ceil(test_size * len(queue))
-
-    test_repos = set()
-    test_repos_ids = list()
+    train_repos_ids = set(range(len(dataset)))
+    test_repos_ids = set()
     cur_test_size = 0
 
     while cur_test_size != test_size:
-        repo, ids = queue.pop()
+        if queue:
+            repo, ids = queue.pop()
+        else:
+            raise ValueError(
+                'There are not enough data points in the original dataset to satisfy both the '
+                'test_size and upper_bound_per_repo arguments. Try either decreasing the test_size '
+                'or increasing the upper_bound_per_repo.')
+
         num_new_samples = min(upper_bound_per_repo, test_size - cur_test_size, len(ids))
 
-        test_repos.add(repo)
-        test_repos_ids.extend(ids[:num_new_samples])
+        train_repos_ids.difference_update(ids)
+        test_repos_ids.update(ids[:num_new_samples])
         cur_test_size += num_new_samples
 
-    train_ds = dataset.filter(lambda x: x['repo'] not in test_repos)
+    train_ds = dataset.select(train_repos_ids)
     test_ds = dataset.select(test_repos_ids)
 
     return train_ds, test_ds  # TODO: show disjointness

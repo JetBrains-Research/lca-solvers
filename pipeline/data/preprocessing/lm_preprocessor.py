@@ -5,13 +5,13 @@ from pipeline.data.preprocessing.preprocessor_base import PreprocessorBase
 import math
 import re
 import warnings
-from typing import TypedDict, NamedTuple
+from typing import TypedDict
 
 import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 
-class LMBatch(TypedDict):  # TODO: replace with NamedTuple
+class LMBatch(TypedDict):
     input_ids: torch.Tensor
     target_ids: torch.Tensor
     loss_mask: torch.Tensor
@@ -40,7 +40,7 @@ class LMPreprocessor(PreprocessorBase):
         self.context_tokens = context_tokens
 
         self.loss_ratio = loss_ratio
-        self._loss_mask = torch.zeros(1, max_seq_len, dtype=torch.int64)
+        self._loss_mask = torch.zeros(1, max_seq_len, dtype=torch.bool)
         self._loss_mask[:, -math.ceil(loss_ratio * max_seq_len):] = 1
 
         self.num_chars_per_token = num_chars_per_token
@@ -56,7 +56,11 @@ class LMPreprocessor(PreprocessorBase):
                           'due to an underestimation of the length of the truncated character sequence.')
 
     def get_loss_mask(self, batch_size: int = 1) -> torch.Tensor:
-        # can be easily overridden by subclasses
+        """
+        Important note: different number of masked tokens in different
+        micro-batches will break gradient accumulation, in which case
+        the training loop should be corrected with gradient scaling.
+        """
         return self._loss_mask.expand(batch_size, -1)
 
     def tokenize_pre_context_prompt(self, prompts: list[str]) -> BatchEncoding:

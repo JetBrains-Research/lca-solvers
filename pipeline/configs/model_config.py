@@ -1,4 +1,5 @@
 from pipeline.configs.config_base import ConfigBase
+from pipeline.environment.run_directory import MODEL_YAML
 from pipeline.model.init import AttentionImplementation
 
 from dataclasses import dataclass
@@ -8,10 +9,13 @@ import torch
 
 @dataclass
 class ModelConfig(ConfigBase):
+    _default_path = MODEL_YAML
+
     tokenizer_name: str
     model_name: str
     trust_remote_code: bool
 
+    use_cache: bool = False
     device: torch.device | None = None
     dtype: torch.dtype | None = None
     attn_implementation: AttentionImplementation | None = None

@@ -1,27 +1,31 @@
 # Iteration parameters
-max_iters: 80_000
-valid_freq: 100
-gradient_accumulation_steps: 2
-micro_batch_size: 2
+max_iters: 2048
+valid_freq: 256
+gradient_accumulation_steps: 16
+micro_batch_size: 1
 
 # AdamW optimizer
-learning_rate: 6.0e-4
+learning_rate: 7.0e-5
 beta_1: 0.9
-beta_2: 0.95
+beta_2: 0.999
 weight_decay: 0.01
-max_grad_norm: 1
+max_grad_norm: 2
 
 # Cosine lr scheduler with warmup
-warmup_iters: 2000
-lr_decay_iters: 60_000
-min_lr: 6.0e-5
+warmup_iters: 81
+lr_decay_iters: 2048
+min_lr: 1.0e-7
 
 # Metrics
-train_metrics: []
-valid_metrics: []
+train_metrics: [cross_entropy]
+valid_metrics: [cross_entropy]
 
 # DataLoader
 shuffle: True
 drop_last: False
 num_workers: 2
+prefetch_factor: 2
 random_seed: 1337
+
+# Floating point
+fp32_matmul_precision: high

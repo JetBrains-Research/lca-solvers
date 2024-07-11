@@ -1,5 +1,5 @@
-from pipeline.data.composed_datapoint import ComposedDatapoint
-from pipeline.data.datapoint import Datapoint
+from pipeline.data.composed_datapoint import ComposedDatapoint, BatchComposedDatapoint
+from pipeline.data.datapoint import Datapoint, BatchDatapoint
 
 import abc
 from typing import Any, Iterable
@@ -7,7 +7,6 @@ from typing import Any, Iterable
 from datasets import Dataset
 
 
-# TODO: cache results?
 class ComposerBase(abc.ABC):
     def __init__(self,
                  pre_context_prompt: str,
@@ -58,6 +57,15 @@ class ComposerBase(abc.ABC):
             completion_lines=datapoint.completion_lines,
         )
 
+    def compose_batch(self, batch: BatchDatapoint) -> BatchComposedDatapoint:
+        batch_keys = batch.keys()
+        composed_batch_keys = BatchComposedDatapoint.__required_keys__
+        # transpose and compose
+        batch = [self.compose(dict(zip(batch_keys, data))) for data in zip(*batch.values())]
+        # transpose back
+        batch = {key: list(map(lambda x: x.get(key), batch)) for key in composed_batch_keys}
+        return batch
+
     def compose_dataset(self,
                         dataset: Dataset,
                         writer_batch_size: int = 128,
@@ -67,6 +75,8 @@ class ComposerBase(abc.ABC):
         return dataset.map(
             function=self.compose,
             remove_columns=map_kwargs.pop('remove_columns', dataset.column_names),
+            # created cache files consume a lot of disk space
+            load_from_cache_file=map_kwargs.pop('load_from_cache_file', False),
             writer_batch_size=writer_batch_size,
             num_proc=num_proc,
             desc=map_kwargs.pop('desc', f'Applying {type(self).__name__} to a given dataset'),

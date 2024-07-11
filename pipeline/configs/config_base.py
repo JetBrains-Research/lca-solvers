@@ -1,8 +1,8 @@
 from __future__ import annotations
-from dataclasses import dataclass, asdict
-from typing import TypeVar
 
 import abc
+from dataclasses import dataclass, asdict
+from typing import TypeVar, Type
 
 import yaml
 
@@ -14,6 +14,15 @@ class ConfigBase(abc.ABC):
     dict = property(asdict)
 
     @classmethod
-    def from_yaml(cls: T, path: str) -> T:
+    @property
+    @abc.abstractmethod
+    def _default_path(cls) -> str:  # noqa: classmethod
+        raise NotImplementedError
+
+    @classmethod
+    def from_yaml(cls: Type[T], path: str | None = None) -> T:
+        if path is None:
+            path = cls._default_path
+
         with open(path) as stream:
             return cls(**yaml.safe_load(stream))  # noqa: PyCharm bug?

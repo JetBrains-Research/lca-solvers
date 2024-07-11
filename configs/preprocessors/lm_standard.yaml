@@ -1,3 +1,3 @@
-max_seq_len: 2048
-context_tokens: 1024
-loss_ratio: 0.33
+max_seq_len: 4096
+context_tokens: 2560
+loss_ratio: 0.3125

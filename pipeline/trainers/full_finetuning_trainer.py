@@ -6,18 +6,19 @@ from pipeline.trainers.utils.fused_sampler import FusedSampler
 from pipeline.trainers.utils.schedulers import get_lr_from_cosine_scheduler_with_linear_warmup
 
 from functools import partial
+from typing import Literal
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from datasets import Dataset
 from torch.utils.data import DataLoader
-from tqdm.auto import tqdm
+from tqdm.auto import trange
 from transformers import PreTrainedTokenizerBase
 
 
-# TODO: refactor
+# TODO: refactor (use TrainerBase class)
 # TODO: test determinism and everything else
-# TODO: set_float32_matmul_precision
 class FullFineTuningTrainer(TrainerBase):
     def __init__(self,
                  model: nn.Module,
@@ -49,7 +50,10 @@ class FullFineTuningTrainer(TrainerBase):
                  shuffle: bool,
                  drop_last: bool,
                  num_workers: int,
+                 prefetch_factor: int,
                  random_seed: int | None,
+                 # Floating point
+                 fp32_matmul_precision: Literal['highest', 'high', 'medium'],
                  ) -> None:
         # main objects
         self.model = model
@@ -59,13 +63,14 @@ class FullFineTuningTrainer(TrainerBase):
 
         # iterations
         self.start_iter = checkpointer.get_iteration_number()
+        self.max_iters = max_iters
         self.gradient_accumulation_steps = gradient_accumulation_steps
-        self.micro_batch_size = micro_batch_size
 
         # environment
         self.is_on_cuda = (model.device.type == 'cuda')
         if random_seed is not None:
             torch.manual_seed(random_seed)
+        torch.set_float32_matmul_precision(fp32_matmul_precision)
 
         # validation
         if valid_ds is None and valid_freq is None and not valid_metrics:
@@ -80,6 +85,7 @@ class FullFineTuningTrainer(TrainerBase):
                 num_workers=num_workers,
                 pin_memory=self.is_on_cuda,
                 drop_last=False,
+                prefetch_factor=prefetch_factor,
                 persistent_workers=(valid_freq > max_iters),
                 pin_memory_device=str(model.device),
             )
@@ -101,6 +107,7 @@ class FullFineTuningTrainer(TrainerBase):
             num_workers=num_workers,
             pin_memory=self.is_on_cuda,
             drop_last=drop_last,
+            prefetch_factor=prefetch_factor,
             pin_memory_device=str(model.device),
         )
 
@@ -163,5 +170,51 @@ class FullFineTuningTrainer(TrainerBase):
 
         return ...  # TODO
 
-    def train(self) -> None:
-        pass  # TODO
+    # TODO: refactor
+    def train(self, verbose: bool = True) -> None:
+        self.model.train()
+
+        train_iter = iter(self.train_dl)
+        pbar_iter = trange(
+            self.start_iter, self.max_iters,
+            desc='Optimization steps',
+            initial=self.start_iter,
+            total=self.max_iters,
+            position=0,
+            disable=not verbose,
+        )
+        pbar_accumulation = trange(
+            self.gradient_accumulation_steps,
+            desc='Gradient accumulation steps',
+            position=1,
+            disable=not verbose,
+        )
+
+        for iter_num in pbar_iter:
+
+            lr = self.get_lr(iter_num)
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = lr
+
+            for micro_step in range(self.gradient_accumulation_steps):
+
+                micro_batch = [t.to(self.model.device) for t in next(train_iter).values()]
+                input_ids, targets_ids, loss_mask, category_ids = micro_batch
+
+                output = self.model(input_ids)
+                loss = F.cross_entropy(output.logits[loss_mask], targets_ids[loss_mask])
+                loss = loss / self.gradient_accumulation_steps
+                print(loss.item())
+
+                self.grad_scaler.scale(loss).backward()
+                pbar_accumulation.update()
+
+            if self.max_grad_norm != 0:
+                self.grad_scaler.unscale_(self.optimizer)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+
+            self.grad_scaler.step(self.optimizer)
+            self.grad_scaler.update()
+            self.optimizer.zero_grad(set_to_none=True)
+
+            pbar_accumulation.reset()

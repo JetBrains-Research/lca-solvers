@@ -30,3 +30,12 @@ class Datapoint:
     completion_lines: CompletionLines
     repo_snapshot: RepoSnapshot
     completion_lines_raw: CompletionLines | None = None
+
+
+class BatchDatapoint(TypedDict):
+    repo: list[str]
+    commit_hash: list[str]
+    completion_file: list[CompletionFile]
+    completion_lines: list[CompletionLines]
+    repo_snapshot: list[RepoSnapshot]
+    completion_lines_raw: list[CompletionLines]

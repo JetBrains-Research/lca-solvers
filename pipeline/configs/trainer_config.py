@@ -1,11 +1,15 @@
 from pipeline.configs.config_base import ConfigBase
+from pipeline.environment.run_directory import TRAINER_YAML
 from pipeline.outputs.metrics.metrics_registry import MetricName
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass
 class FullFineTuningTrainerConfig(ConfigBase):
+    _default_path = TRAINER_YAML
+
     # Iteration parameters
     max_iters: int
     valid_freq: int | None  # None means no validation at all
@@ -32,4 +36,8 @@ class FullFineTuningTrainerConfig(ConfigBase):
     shuffle: bool
     drop_last: bool
     num_workers: int
+    prefetch_factor: int
     random_seed: int | None
+
+    # Floating point TODO: another config for all global settings?
+    fp32_matmul_precision: Literal['highest', 'high', 'medium']

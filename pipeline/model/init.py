@@ -42,13 +42,14 @@ def get_optimal_attn(model_name: str, device: torch.device, dtype: torch.dtype) 
 
 
 def init_model(load_from: str | None,
-                model_name: str,
-                trust_remote_code: bool,
-                device: torch.device,
-                dtype: torch.dtype,
-                attn_implementation: AttentionImplementation | None,
-                compile: bool,  # noqa: built-in function that won't be used
-                ) -> nn.Module:
+               model_name: str,
+               trust_remote_code: bool,
+               use_cache: bool,
+               device: torch.device,
+               dtype: torch.dtype,
+               attn_implementation: AttentionImplementation | None,
+               compile: bool,  # noqa: built-in function that won't be used
+               ) -> nn.Module:
     if device is None:
         device = get_free_device()
     if dtype is None:
@@ -64,6 +65,7 @@ def init_model(load_from: str | None,
         device_map=device,
         torch_dtype=dtype,
         attn_implementation=attn_implementation,
+        use_cache=use_cache,
     )
 
     if compile:
@@ -72,15 +74,16 @@ def init_model(load_from: str | None,
 
 
 def init_tokenizer_model(load_from: str | None,
-                          tokenizer_name: str,
-                          model_name: str,
-                          trust_remote_code: bool,
-                          device: torch.device,
-                          dtype: torch.dtype,
-                          attn_implementation: AttentionImplementation | None,
-                          compile: bool,  # noqa: built-in function that won't be used
-                          ) -> tuple[PreTrainedTokenizerBase, nn.Module]:
+                         tokenizer_name: str,
+                         model_name: str,
+                         trust_remote_code: bool,
+                         use_cache: bool,
+                         device: torch.device,
+                         dtype: torch.dtype,
+                         attn_implementation: AttentionImplementation | None,
+                         compile: bool,  # noqa: built-in function that won't be used
+                         ) -> tuple[PreTrainedTokenizerBase, nn.Module]:
     return (
         init_tokenizer(tokenizer_name, trust_remote_code),
-        init_model(load_from, model_name, trust_remote_code, device, dtype, attn_implementation, compile),
+        init_model(load_from, model_name, trust_remote_code, use_cache, device, dtype, attn_implementation, compile),
     )
