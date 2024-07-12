@@ -1,7 +1,7 @@
-import abc
+from abc import ABC
 
 
-class LoggerBase(abc.ABC):
+class LoggerBase(ABC):
     pass
 
 

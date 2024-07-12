@@ -1,11 +1,28 @@
 from pipeline.data.composed_datapoint import BatchComposedDatapoint
 
-import abc
+from abc import ABC, abstractmethod
+from typing import TypedDict
 
-from transformers import BatchEncoding
+import torch
 
 
-class PreprocessorBase(abc.ABC):
-    @abc.abstractmethod
-    def __call__(self, batch: BatchComposedDatapoint) -> BatchEncoding:
+class PreprocessedBatch(TypedDict):
+    input_ids: torch.Tensor
+    target_ids: torch.Tensor
+    loss_mask: torch.Tensor
+    category_ids: torch.Tensor
+
+
+class PreprocessorBase(ABC):
+    @abstractmethod
+    def get_loss_mask(self, *args, **kwargs) -> torch.Tensor:
+        """
+        Important note: different number of masked tokens in different
+        micro-batches will break gradient accumulation, in which case
+        the training loop should include corresponding gradient scaling.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def __call__(self, batch: BatchComposedDatapoint) -> PreprocessedBatch:
         raise NotImplementedError

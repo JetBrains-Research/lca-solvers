@@ -1,6 +1,7 @@
 from pipeline.outputs.checkpointing import CheckpointManager
 from pipeline.outputs.loggers import LoggerBase
-from pipeline.outputs.metrics.metrics_registry import MetricName, MetricValue
+from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 from pipeline.trainers.trainer_base import TrainerBase
 from pipeline.trainers.utils.fused_sampler import FusedSampler
 from pipeline.trainers.utils.schedulers import get_lr_from_cosine_scheduler_with_linear_warmup
@@ -13,7 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from datasets import Dataset
 from torch.utils.data import DataLoader
-from tqdm.auto import trange
+from tqdm.auto import trange, tqdm
 from transformers import PreTrainedTokenizerBase
 
 
@@ -46,6 +47,7 @@ class FullFineTuningTrainer(TrainerBase):
                  # metrics
                  train_metrics: list[MetricName],
                  valid_metrics: list[MetricName],
+                 ema_alpha: float,
                  # DataLoader
                  shuffle: bool,
                  drop_last: bool,
@@ -133,8 +135,16 @@ class FullFineTuningTrainer(TrainerBase):
             raise ValueError('The warmup_iters, lr_decay_iters and min_lr arguments do not match each other.')
 
         # metrics
-        self.train_metrics = train_metrics
-        self.valid_metrics = valid_metrics
+        self.train_metrics = dict()
+        self.valid_metrics = dict()
+        for metrics_dict, names in ([self.train_metrics, train_metrics],
+                                    [self.valid_metrics, valid_metrics]):
+            for name in names:
+                if name.startswith('ema_'):
+                    metrics_dict[name] = METRICS_REGISTRY[name](ema_alpha)
+                else:
+                    metrics_dict[name] = METRICS_REGISTRY[name]()
+
 
     def _init_adamw(self,
                     learning_rate: float,
@@ -159,16 +169,33 @@ class FullFineTuningTrainer(TrainerBase):
         return optimizer
 
     @torch.inference_mode
-    def validate(self) -> dict[MetricName, MetricValue]:
+    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
         assert self.valid_dl is not None  # TODO: remove
         training = self.model.training
         self.model.eval()
 
-        pass  # TODO
+        valid_iter = tqdm(
+            iterable=self.valid_dl,
+            desc='Validation steps',
+            position=1,
+            disable=not verbose,
+        )
+
+        for micro_batch in valid_iter:
+            micro_batch = [t.to(self.model.device) for t in micro_batch.values()]
+            input_ids, target_ids, loss_mask, category_ids = micro_batch
+
+            model_output = self.model(input_ids)
+
+            locals_copy = locals().copy()
+            locals_copy.pop('self')
+            [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
+            del locals_copy
+
+        valid_log = {name: metric.batch_commit() for name, metric in self.valid_metrics.items()}
 
         self.model.train(training)
-
-        return ...  # TODO
+        return valid_log
 
     # TODO: refactor
     def train(self, verbose: bool = True) -> None:
@@ -191,22 +218,25 @@ class FullFineTuningTrainer(TrainerBase):
         )
 
         for iter_num in pbar_iter:
-
             lr = self.get_lr(iter_num)
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = lr
 
-            for micro_step in range(self.gradient_accumulation_steps):
-
+            for _ in range(self.gradient_accumulation_steps):
                 micro_batch = [t.to(self.model.device) for t in next(train_iter).values()]
-                input_ids, targets_ids, loss_mask, category_ids = micro_batch
+                input_ids, target_ids, loss_mask, category_ids = micro_batch
 
-                output = self.model(input_ids)
-                loss = F.cross_entropy(output.logits[loss_mask], targets_ids[loss_mask])
+                model_output = self.model(input_ids)
+                loss = F.cross_entropy(model_output.logits[loss_mask], target_ids[loss_mask])
                 loss = loss / self.gradient_accumulation_steps
-                print(loss.item())
 
                 self.grad_scaler.scale(loss).backward()
+
+                locals_copy = locals().copy()
+                locals_copy.pop('self')
+                [metric.micro_batch_update(**locals_copy) for metric in self.train_metrics.values()]
+                del locals_copy
+
                 pbar_accumulation.update()
 
             if self.max_grad_norm != 0:
@@ -216,5 +246,9 @@ class FullFineTuningTrainer(TrainerBase):
             self.grad_scaler.step(self.optimizer)
             self.grad_scaler.update()
             self.optimizer.zero_grad(set_to_none=True)
+
+            train_log = {name: metric.batch_commit() for name, metric in self.train_metrics.items()}
+            if (iter_num + 1) % self.valid_freq == 0:
+                valid_log = self.validate(verbose)
 
             pbar_accumulation.reset()

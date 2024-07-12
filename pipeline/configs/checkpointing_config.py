@@ -1,7 +1,7 @@
 from pipeline.configs.config_base import ConfigBase
 from pipeline.environment.run_directory import CHECKPOINTS_DIR, CHECKPOINTING_YAML
 from pipeline.outputs.checkpointing import LoadingMode
-from pipeline.outputs.metrics.metrics_registry import MetricName
+from pipeline.outputs.metrics.metric_base import MetricName
 
 from dataclasses import dataclass
 from typing import Callable

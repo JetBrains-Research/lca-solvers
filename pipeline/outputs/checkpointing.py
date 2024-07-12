@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pipeline.outputs.metrics.metrics_registry import MetricName, MetricValue, METRICS_REGISTRY
+from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, OptimizationMode
+from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 
 import json
 import os
@@ -44,6 +45,7 @@ class CheckpointManager:
 
         self.init_from = init_from
         self.saving_freq = saving_freq  # TODO: use
+        self.main_metric_name = main_metric
         self.main_metric = METRICS_REGISTRY[main_metric]
         self.directory = directory
 
@@ -58,12 +60,12 @@ class CheckpointManager:
         with open(metrics_file) as stream:
             metrics = json.load(stream)
 
-        metric_value = metrics.get(self.main_metric.name)
+        metric_value = metrics.get(self.main_metric_name)
 
         if metric_value is None:
             raise RuntimeError(f'The {metrics_file} does not contain information '
                                'about the specified main_metric.')
-        elif self.main_metric.mode == 'minimization':
+        elif self.main_metric.mode == OptimizationMode.MIN:
             return metric_value
         else:
             return -metric_value

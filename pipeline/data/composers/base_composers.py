@@ -1,13 +1,13 @@
 from pipeline.data.composed_datapoint import ComposedDatapoint, BatchComposedDatapoint
 from pipeline.data.datapoint import Datapoint, BatchDatapoint
 
-import abc
+from abc import ABC, abstractmethod
 from typing import Any, Iterable
 
 from datasets import Dataset
 
 
-class ComposerBase(abc.ABC):
+class ComposerBase(ABC):
     def __init__(self,
                  pre_context_prompt: str,
                  chunks_sep: str,
@@ -25,7 +25,7 @@ class ComposerBase(abc.ABC):
     def get_post_context_prompt(self, _datapoint: Datapoint) -> str:
         return self.post_context_prompt
 
-    @abc.abstractmethod
+    @abstractmethod
     def compose_context(self, datapoint: Datapoint) -> str:
         raise NotImplementedError
 
@@ -84,7 +84,7 @@ class ComposerBase(abc.ABC):
         )
 
 
-class GrainedComposer(ComposerBase, abc.ABC):
+class GrainedComposer(ComposerBase, ABC):
     def chunk_datapoint(self, datapoint: Datapoint) -> Iterable[str]:
         return [
             self.path_comment_template.format(filename=fn, content=cnt)
@@ -96,7 +96,7 @@ class GrainedComposer(ComposerBase, abc.ABC):
 
 
 class RankingComposer(GrainedComposer):
-    @abc.abstractmethod
+    @abstractmethod
     def ranking_function(self, chunks: Iterable[str], datapoint: Datapoint) -> Iterable[int | float]:
         raise NotImplementedError
 

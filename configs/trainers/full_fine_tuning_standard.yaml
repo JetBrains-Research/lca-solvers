@@ -17,8 +17,9 @@ lr_decay_iters: 2048
 min_lr: 1.0e-7
 
 # Metrics
-train_metrics: [cross_entropy]
-valid_metrics: [cross_entropy]
+train_metrics: [cross_entropy, detached_cross_entropy, ema_cross_entropy, ema_detached_cross_entropy]
+valid_metrics: [cross_entropy, detached_cross_entropy, ema_cross_entropy, ema_detached_cross_entropy]
+ema_alpha: 0.05
 
 # DataLoader
 shuffle: True

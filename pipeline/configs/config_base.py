@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import abc
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
 from typing import TypeVar, Type
 
@@ -10,13 +10,12 @@ T = TypeVar('T')
 
 
 @dataclass
-class ConfigBase(abc.ABC):
+class ConfigBase(ABC):
     dict = property(asdict)
 
-    @classmethod
     @property
-    @abc.abstractmethod
-    def _default_path(cls) -> str:  # noqa: classmethod
+    @abstractmethod
+    def _default_path(self) -> str:
         raise NotImplementedError
 
     @classmethod

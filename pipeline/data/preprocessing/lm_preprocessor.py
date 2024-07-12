@@ -1,21 +1,14 @@
 from pipeline.data.categories import CATEGORY2ID, UNDEFINED_CATEGORY_ID
 from pipeline.data.composed_datapoint import BatchComposedDatapoint
-from pipeline.data.preprocessing.preprocessor_base import PreprocessorBase
+from pipeline.data.datapoint import CompletionLines
+from pipeline.data.preprocessing.preprocessor_base import PreprocessedBatch, PreprocessorBase
 
 import math
 import re
 import warnings
-from typing import TypedDict
 
 import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
-
-
-class LMBatch(TypedDict):
-    input_ids: torch.Tensor
-    target_ids: torch.Tensor
-    loss_mask: torch.Tensor
-    category_ids: torch.Tensor
 
 
 # TODO: test
@@ -54,14 +47,6 @@ class LMPreprocessor(PreprocessorBase):
             warnings.warn(traceback_msg +
                           f'num_chars_per_token has been increased from {old_value} to {self.num_chars_per_token} '
                           'due to an underestimation of the length of the truncated character sequence.')
-
-    def get_loss_mask(self, batch_size: int = 1) -> torch.Tensor:
-        """
-        Important note: different number of masked tokens in different
-        micro-batches will break gradient accumulation, in which case
-        the training loop should be corrected with gradient scaling.
-        """
-        return self._loss_mask.expand(batch_size, -1)
 
     def tokenize_pre_context_prompt(self, prompts: list[str]) -> BatchEncoding:
         trunc_upper_bound = self.max_seq_len - self.context_tokens
@@ -181,7 +166,42 @@ class LMPreprocessor(PreprocessorBase):
 
         return tokenized_contexts
 
-    def __call__(self, batch: BatchComposedDatapoint) -> LMBatch:
+    def get_loss_mask(self, batch_size: int) -> torch.Tensor:
+        return self._loss_mask.expand(batch_size, -1)
+
+    def get_category_ids(self,
+                         completion_lines: list[CompletionLines],
+                         tokenized_completions: BatchEncoding,
+                         batch_size: int,
+                         ) -> torch.Tensor:
+        category_ids = torch.full((batch_size, self.max_seq_len - 1), UNDEFINED_CATEGORY_ID)
+
+        for sample_idx in range(batch_size):
+            t_completion_start = self.max_seq_len - tokenized_completions.length[sample_idx] - 1
+            newline_positions = tokenized_completions.newline_positions[sample_idx]
+            offset_mapping = tokenized_completions.offset_mapping[sample_idx]
+
+            newline_positions.append(float('inf'))
+            line2category = {
+                line_idx: CATEGORY2ID[category]
+                for category, line_category_ids in completion_lines[sample_idx].items()
+                for line_idx in line_category_ids
+            }
+
+            line_idx = 0
+            category_id = line2category.get(line_idx)
+
+            for token_idx, (char_start, _) in enumerate(offset_mapping, start=t_completion_start):
+                if char_start > newline_positions[line_idx]:
+                    line_idx += 1
+                    category_id = line2category.get(line_idx)
+
+                if category_id is not None:
+                    category_ids[sample_idx, token_idx] = category_id
+
+        return category_ids
+
+    def __call__(self, batch: BatchComposedDatapoint) -> PreprocessedBatch:
         # TODO: bos tokens must be only in the begging of sample
         # TODO: warn if padding is used
 
@@ -199,42 +219,16 @@ class LMPreprocessor(PreprocessorBase):
         )
 
         batch_size = len(tokenized_completions.length)
-        loss_mask = self.get_loss_mask(batch_size)
-        category_ids = torch.full_like(loss_mask, UNDEFINED_CATEGORY_ID)
-
-        for sample_idx in range(batch_size):
-            t_completion_start = self.max_seq_len - tokenized_completions.length[sample_idx] - 1
-            newline_positions = tokenized_completions.newline_positions[sample_idx]
-            offset_mapping = tokenized_completions.offset_mapping[sample_idx]
-            completion_lines = batch['completion_lines'][sample_idx]
-
-            newline_positions.append(float('inf'))
-            line2category = {
-                line_idx: CATEGORY2ID[category]
-                for category, line_category_ids in completion_lines.items()
-                for line_idx in line_category_ids
-            }
-
-            line_idx = 0
-            category_id = line2category.get(line_idx)
-
-            for token_idx, (char_start, _) in enumerate(offset_mapping, start=t_completion_start):
-                if char_start > newline_positions[line_idx]:
-                    line_idx += 1
-                    category_id = line2category.get(line_idx)
-
-                if category_id is not None:
-                    category_ids[sample_idx, token_idx] = category_id
-
         tokenized_batch = torch.tensor([sum(p_c_c, []) for p_c_c in zip(
             tokenized_prompts.input_ids,
             tokenized_contexts.input_ids,
             tokenized_completions.input_ids
         )])
 
-        return LMBatch(
+        return PreprocessedBatch(
             input_ids=tokenized_batch[:, :-1],
             target_ids=tokenized_batch[:, 1:],
-            loss_mask=loss_mask,
-            category_ids=category_ids,
+            loss_mask=self.get_loss_mask(batch_size),
+            category_ids=self.get_category_ids(
+                batch['completion_lines'], tokenized_completions, batch_size),
         )
