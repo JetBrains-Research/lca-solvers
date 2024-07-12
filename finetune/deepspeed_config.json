@@ -1,0 +1,36 @@
+{
+    "train_batch_size": 1,
+    "train_micro_batch_size_per_gpu": 1,
+    "gradient_accumulation_steps": 64,
+    "optimizer": {
+        "type": "AdamW",
+        "params": {
+            "lr": 5e-5,
+            "weight_decay": 0.01,
+        }
+    },
+    "fp16": {
+        "enabled": true
+    },
+    "zero_optimization": {
+    "stage": 3,
+    "allgather_partitions": true,
+    "allgather_bucket_size": 2e8,
+    "reduce_scatter": true,
+    "reduce_bucket_size": 2e8,
+    "overlap_comm": true,
+    "contiguous_gradients": true,
+    "sub_group_size": 10000000
+    },
+    "activation_checkpointing": {
+        "partition_activations": true,
+        "cpu_checkpointing": false,
+        "contiguous_memory_optimization": true,
+        "synchronize_checkpoint_boundary":false,
+    },
+    "pipeline": {
+        "type": "1d",  // Enable pipeline parallelism
+        "chunks": 1,
+        "pipe_parallel_degree": 4  // Adjust based on the number of GPUs
+    }
+}
