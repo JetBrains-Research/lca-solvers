@@ -19,3 +19,7 @@ MODEL_YAML = os.path.join(CONFIGS_DIR, 'model.yaml')
 PREPROCESSOR_YAML = os.path.join(CONFIGS_DIR, 'preprocessor.yaml')
 SPLIT_YAML = os.path.join(CONFIGS_DIR, 'split.yaml')
 TRAINER_YAML = os.path.join(CONFIGS_DIR, 'trainer.yaml')
+
+
+def get_run_name() -> str:
+    return os.path.basename(os.getcwd())

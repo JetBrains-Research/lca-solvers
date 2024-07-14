@@ -1,3 +1,4 @@
+from pipeline.outputs.loggers.logger_base import JsonAllowedTypes, LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 
 import csv
@@ -8,10 +9,7 @@ import sys
 import traceback
 import warnings
 from types import TracebackType
-from typing import NoReturn, TypeVar, Type
-
-T = TypeVar('T')
-JsonAllowedTypes = dict | list | tuple | str | int | float | bool | None
+from typing import NoReturn
 
 
 class JsonFormatter(logging.Formatter):
@@ -62,14 +60,7 @@ class JsonHandler(logging.FileHandler):
         super().close()
 
 
-class LocalLogger:
-    _instance = None  # singleton pattern
-
-    def __new__(cls: Type[T], *args, **kwargs) -> T:
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
+class LocalLogger(LoggerBase):
     def __init__(self,
                  train_csv: str,
                  valid_csv: str,
@@ -152,7 +143,3 @@ class LocalLogger:
             })
             self.message('Process finished with a non-zero exit code.')
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
-
-
-class WandbLogger(LocalLogger):
-    pass  # TODO: singleton as well

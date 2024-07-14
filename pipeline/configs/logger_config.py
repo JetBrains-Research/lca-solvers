@@ -1,7 +1,8 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import LOGS_DIR, LOGGER_YAML
+from pipeline.environment.run_directory import LOGS_DIR, LOGGER_YAML, get_run_name
 
 from dataclasses import dataclass
+from typing import Any, Literal
 
 
 @dataclass
@@ -15,8 +16,13 @@ class LocalLoggerConfig(ConfigBase):
     directory: str = LOGS_DIR
 
 
-@dataclass
+@dataclass(kw_only=True)
 class WandbLoggerConfig(LocalLoggerConfig):
     _default_path = LOGGER_YAML
 
-    # TODO
+    project: str
+    name: str = get_run_name()
+    config: dict[str, Any] | None = None
+    group: str | None = None
+    notes: str | None = None
+    resume: Literal['allow', 'must', 'never', 'auto']

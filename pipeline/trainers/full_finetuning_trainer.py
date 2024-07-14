@@ -1,5 +1,5 @@
 from pipeline.outputs.checkpointing import CheckpointManager
-from pipeline.outputs.loggers import LocalLogger
+from pipeline.outputs.loggers.logger_base import LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 from pipeline.trainers.trainer_base import TrainerBase
@@ -28,7 +28,7 @@ class FullFineTuningTrainer(TrainerBase):
                  valid_ds: Dataset | None,
                  # auxiliary objects
                  checkpointer: CheckpointManager,
-                 logger: LocalLogger,
+                 logger: LoggerBase,
                  # iteration parameters
                  max_iters: int,
                  valid_freq: int | None,
@@ -168,7 +168,7 @@ class FullFineTuningTrainer(TrainerBase):
         return optimizer
 
     @torch.inference_mode
-    def validate(self, verbose: bool = True) -> None:
+    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
         training = self.model.training
         self.model.eval()
 
@@ -176,6 +176,7 @@ class FullFineTuningTrainer(TrainerBase):
             iterable=self.valid_dl,
             desc='Validation steps',
             position=1,
+            leave=False,
             disable=not verbose,
         )
 
@@ -190,12 +191,11 @@ class FullFineTuningTrainer(TrainerBase):
             [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
             del locals_copy
 
-        self.logger.valid_log({
-            name: metric.batch_commit() for name, metric in self.valid_metrics.items()
-        })
-        self.model.train(training)
+        valid_log = {name: metric.batch_commit() for name, metric in self.valid_metrics.items()}
 
-    # TODO: refactor
+        self.model.train(training)
+        return valid_log
+
     def train(self, verbose: bool = True) -> None:
         self.model.train()
 
@@ -212,6 +212,7 @@ class FullFineTuningTrainer(TrainerBase):
             self.gradient_accumulation_steps,
             desc='Gradient accumulation steps',
             position=1,
+            leave=False,
             disable=not verbose,
         )
 
@@ -239,16 +240,21 @@ class FullFineTuningTrainer(TrainerBase):
 
             if self.max_grad_norm != 0:
                 self.grad_scaler.unscale_(self.optimizer)
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
 
             self.grad_scaler.step(self.optimizer)
             self.grad_scaler.update()
             self.optimizer.zero_grad(set_to_none=True)
 
-            self.logger.train_log({
-                name: metric.batch_commit() for name, metric in self.train_metrics.items()
-            })
             if (iter_num + 1) % self.valid_freq == 0:
-                self.validate(verbose)
+                valid_log = {'iter_num': iter_num}  # TODO: add to the statistics.py
+                valid_log.update(self.validate(verbose))
+                self.logger.valid_log(valid_log)
+
+            train_log = {'iter_num': iter_num}  # TODO: add to the statistics.py
+            train_log.update({name: metric.batch_commit() for name, metric in self.train_metrics.items()})
+            self.logger.train_log(train_log)
+
+            # TODO: add checkpointing
 
             pbar_accumulation.reset()

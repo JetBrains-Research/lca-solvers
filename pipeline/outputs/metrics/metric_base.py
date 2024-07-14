@@ -29,7 +29,7 @@ class MetricBase(ABC):
         raise NotImplementedError
 
 
-def ema_factory(metric_cls: Type[MetricBase]) -> type:
+def ema_factory(metric_cls: Type[MetricBase]) -> Type[MetricBase]:
     class EMAMetric(metric_cls, ABC):
         def __init__(self, ema_alpha: float) -> None:
             super().__init__()

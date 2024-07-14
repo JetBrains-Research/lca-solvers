@@ -10,8 +10,10 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, PreTra
 
 
 class AttentionImplementation(str, Enum):
+    # nondeterministic:
     FA2 = 'flash_attention_2'
     SDPA = 'sdpa'
+    # deterministic:
     EAGER = 'eager'
 
 
