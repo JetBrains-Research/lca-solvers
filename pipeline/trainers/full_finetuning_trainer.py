@@ -1,5 +1,5 @@
 from pipeline.outputs.checkpointing import CheckpointManager
-from pipeline.outputs.loggers import LoggerBase
+from pipeline.outputs.loggers import LocalLogger
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 from pipeline.trainers.trainer_base import TrainerBase
@@ -28,7 +28,7 @@ class FullFineTuningTrainer(TrainerBase):
                  valid_ds: Dataset | None,
                  # auxiliary objects
                  checkpointer: CheckpointManager,
-                 logger: LoggerBase,
+                 logger: LocalLogger,
                  # iteration parameters
                  max_iters: int,
                  valid_freq: int | None,
@@ -61,7 +61,7 @@ class FullFineTuningTrainer(TrainerBase):
         self.model = model
         self.tokenizer = tokenizer
         self.checkpointer = checkpointer
-        self.logger = logger  # TODO
+        self.logger = logger
 
         # iterations
         self.start_iter = checkpointer.get_iteration_number()
@@ -145,7 +145,6 @@ class FullFineTuningTrainer(TrainerBase):
                 else:
                     metrics_dict[name] = METRICS_REGISTRY[name]()
 
-
     def _init_adamw(self,
                     learning_rate: float,
                     beta_1: float,
@@ -169,8 +168,7 @@ class FullFineTuningTrainer(TrainerBase):
         return optimizer
 
     @torch.inference_mode
-    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
-        assert self.valid_dl is not None  # TODO: remove
+    def validate(self, verbose: bool = True) -> None:
         training = self.model.training
         self.model.eval()
 
@@ -192,10 +190,10 @@ class FullFineTuningTrainer(TrainerBase):
             [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
             del locals_copy
 
-        valid_log = {name: metric.batch_commit() for name, metric in self.valid_metrics.items()}
-
+        self.logger.valid_log({
+            name: metric.batch_commit() for name, metric in self.valid_metrics.items()
+        })
         self.model.train(training)
-        return valid_log
 
     # TODO: refactor
     def train(self, verbose: bool = True) -> None:
@@ -247,8 +245,10 @@ class FullFineTuningTrainer(TrainerBase):
             self.grad_scaler.update()
             self.optimizer.zero_grad(set_to_none=True)
 
-            train_log = {name: metric.batch_commit() for name, metric in self.train_metrics.items()}
+            self.logger.train_log({
+                name: metric.batch_commit() for name, metric in self.train_metrics.items()
+            })
             if (iter_num + 1) % self.valid_freq == 0:
-                valid_log = self.validate(verbose)
+                self.validate(verbose)
 
             pbar_accumulation.reset()

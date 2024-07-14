@@ -1,13 +1,158 @@
-from abc import ABC
+from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+
+import csv
+import json
+import logging
+import os
+import sys
+import traceback
+import warnings
+from types import TracebackType
+from typing import NoReturn, TypeVar, Type
+
+T = TypeVar('T')
+JsonAllowedTypes = dict | list | tuple | str | int | float | bool | None
 
 
-class LoggerBase(ABC):
-    pass
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        message_dict = {
+            'timestamp': self.formatTime(record, self.datefmt),
+            'level': record.levelname,
+            'content': record.msg,
+        }
+
+        indent = '    '
+        json_string = json.dumps(message_dict, indent=4)
+        json_string = indent.join(json_string.splitlines(keepends=True))
+        json_string = indent + json_string
+
+        return json_string
 
 
-class LocalLogger(LoggerBase):
-    pass
+class JsonHandler(logging.FileHandler):
+    def __init__(self, path: str, *args, **kwargs) -> None:
+        super().__init__(path, *args, **kwargs)
+
+        if not os.path.exists(path) or os.stat(path).st_size == 0:
+            self.stream.write('[\n')
+            self.first_record = True
+        else:
+            self.stream.seek(self.stream.tell() - 1)
+            self.stream.truncate()
+            self.first_record = False
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if not self.first_record:
+            self.stream.seek(self.stream.tell() - 1)
+            self.stream.truncate()
+            self.stream.write(',\n')
+        self.first_record = False
+
+        super().emit(record)
+
+    def close(self) -> None:
+        if self.first_record:
+            self.stream.seek(0)
+            self.stream.truncate()
+        else:
+            self.stream.seek(self.stream.tell() - 1)
+            self.stream.write(']')
+
+        super().close()
 
 
-class WandbLogger(LoggerBase):
-    pass
+class LocalLogger:
+    _instance = None  # singleton pattern
+
+    def __new__(cls: Type[T], *args, **kwargs) -> T:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self,
+                 train_csv: str,
+                 valid_csv: str,
+                 stdout_file: str,
+                 stderr_file: str,
+                 directory: str,
+                 ) -> None:
+        if train_csv == valid_csv:
+            raise ValueError('The names of the train_csv and valid_csv files must be different.')
+
+        train_csv, valid_csv, stdout_file, stderr_file = map(
+            lambda x: os.path.join(directory, x),
+            [train_csv, valid_csv, stdout_file, stderr_file],
+        )
+
+        self.train_csv = train_csv
+        self.valid_csv = valid_csv
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        formatter = JsonFormatter()
+
+        stdout_handler = JsonHandler(stdout_file)
+        stdout_handler.setLevel(logging.INFO)
+        stdout_handler.setFormatter(formatter)
+        stdout_handler.addFilter(lambda record: record.levelno < logging.WARNING)
+
+        if stderr_file == stdout_file:
+            stderr_handler = stdout_handler
+        else:
+            stderr_handler = JsonHandler(stderr_file)
+            stderr_handler.setLevel(logging.WARNING)
+            stderr_handler.setFormatter(formatter)
+            stderr_handler.addFilter(lambda record: record.levelno >= logging.WARNING)
+
+        self.logger.addHandler(stdout_handler)
+        self.logger.addHandler(stderr_handler)
+
+        warnings.showwarning = self.warning_handler
+        sys.excepthook = self.exception_handler
+
+    @staticmethod
+    def write_metrics_to_csv(metrics: dict[MetricName, MetricValue], path: str) -> None:
+        with open(path, mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=metrics.keys())
+            if file.tell() == 0:
+                writer.writeheader()
+            writer.writerow(metrics)
+
+    def train_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
+        self.write_metrics_to_csv(metrics, self.train_csv)
+        return metrics
+
+    def valid_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
+        self.write_metrics_to_csv(metrics, self.valid_csv)
+        return metrics
+
+    def message(self, message: str | dict[str, JsonAllowedTypes]) -> str | dict[str, JsonAllowedTypes]:
+        self.logger.info(message)
+        return message
+
+    def warning_handler(self, message: Warning, category: type, path: str, lineno: int, *_kwargs) -> None:
+        self.logger.warning({
+            'category': category.__name__,
+            'location': f'{path}:{lineno}',
+            'message': str(message),
+        })
+
+    def exception_handler(self, exc_type: type, exc_value: Exception, exc_traceback: TracebackType) -> NoReturn:
+        if issubclass(exc_type, KeyboardInterrupt):
+            self.message('Process was stopped due to a keyboard interrupt.')
+        else:
+            self.logger.error({
+                'category': exc_type.__name__,
+                'traceback': [{
+                    'location': f'{filename}:{lineno} in {func_name}',
+                    'line': line,
+                } for filename, lineno, func_name, line in traceback.extract_tb(exc_traceback)],
+                'message': str(exc_value),
+            })
+            self.message('Process finished with a non-zero exit code.')
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+
+class WandbLogger(LocalLogger):
+    pass  # TODO: singleton as well

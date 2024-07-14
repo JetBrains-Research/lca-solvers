@@ -32,6 +32,7 @@ class FullFineTuningTrainerConfig(ConfigBase):
     train_metrics: list[MetricName]
     valid_metrics: list[MetricName]  # empty list means no validation at all
     ema_alpha: float  # (see ema_factory in pipeline/outputs/metrics/metric_base.py)
+    # TODO: different ema_alpha for validation (consider valid_freq?)
 
     # DataLoader
     shuffle: bool
