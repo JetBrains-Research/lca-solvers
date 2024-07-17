@@ -1,4 +1,4 @@
-from pipeline.outputs.loggers.logger_base import JsonAllowedTypes, LoggerBase
+from pipeline.outputs.loggers.logger_base import Message, Log, LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 
 import csv
@@ -110,15 +110,13 @@ class LocalLogger(LoggerBase):
                 writer.writeheader()
             writer.writerow(metrics)
 
-    def train_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
-        self.write_metrics_to_csv(metrics, self.train_csv)
+    def log(self, metrics: Log) -> Log:
+        iter_num = {'iter_num': metrics['iteration_number']}
+        self.write_metrics_to_csv(iter_num | metrics['train_metrics'], self.train_csv)
+        self.write_metrics_to_csv(iter_num | metrics['valid_metrics'], self.valid_csv)
         return metrics
 
-    def valid_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
-        self.write_metrics_to_csv(metrics, self.valid_csv)
-        return metrics
-
-    def message(self, message: str | dict[str, JsonAllowedTypes]) -> str | dict[str, JsonAllowedTypes]:
+    def message(self, message: Message) -> Message:
         self.logger.info(message)
         return message
 

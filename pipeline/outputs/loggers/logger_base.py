@@ -1,10 +1,18 @@
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Type
+from typing import TypedDict, TypeVar, Type
+from typing_extensions import NotRequired
 
 T = TypeVar('T')
 JsonAllowedTypes = dict | list | tuple | str | int | float | bool | None
+Message = str | dict[str, JsonAllowedTypes]
+
+
+class Log(TypedDict):
+    iteration_number: int
+    train_metrics: dict[MetricName, MetricValue]
+    valid_metrics: NotRequired[dict[MetricName, MetricValue]]
 
 
 class LoggerBase(ABC):
@@ -17,13 +25,9 @@ class LoggerBase(ABC):
         return cls._instance
 
     @abstractmethod
-    def train_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
+    def log(self, metrics: Log) -> Log:
         raise NotImplementedError
 
     @abstractmethod
-    def valid_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def message(self, message: str | dict[str, JsonAllowedTypes]) -> str | dict[str, JsonAllowedTypes]:
+    def message(self, message: Message) -> Message:
         raise NotImplementedError

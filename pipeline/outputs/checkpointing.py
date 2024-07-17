@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pipeline.outputs.loggers.logger_base import Log
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, OptimizationMode
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 
@@ -22,16 +23,14 @@ class LoadingMode(str, Enum):
 
 @dataclass
 class Checkpoint:
-    iteration_number: int
+    metrics: Log
     model: PreTrainedModel
     optimizer_state: dict
-    metrics: dict[MetricName, MetricValue]
 
 
 class CheckpointManager:
     def __init__(self,
                  init_from: LoadingMode | str,
-                 saving_freq: int,
                  main_metric: MetricName,
                  directory: str,
                  checkpoint_directory_template: str,
@@ -44,7 +43,6 @@ class CheckpointManager:
             raise ValueError('The specified main_metric is not contained in the registry.')
 
         self.init_from = init_from
-        self.saving_freq = saving_freq  # TODO: use
         self.main_metric_name = main_metric
         self.main_metric = METRICS_REGISTRY[main_metric]
         self.directory = directory
@@ -60,7 +58,7 @@ class CheckpointManager:
         with open(metrics_file) as stream:
             metrics = json.load(stream)
 
-        metric_value = metrics.get(self.main_metric_name)
+        metric_value = metrics.get('valid_metrics', metrics['train_metrics']).get(self.main_metric_name)
 
         if metric_value is None:
             raise RuntimeError(f'The {metrics_file} does not contain information '
@@ -113,7 +111,7 @@ class CheckpointManager:
         checkpoint_dir = os.path.join(
             self.directory,
             self._checkpoint_directory_template.format(
-                iteration_number=checkpoint.iteration_number),
+                iteration_number=checkpoint.metrics['iteration_number']),
         )
 
         if os.path.exists(checkpoint_dir):

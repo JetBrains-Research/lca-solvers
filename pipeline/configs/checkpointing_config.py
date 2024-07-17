@@ -12,7 +12,6 @@ class CheckpointManagerConfig(ConfigBase):
     _default_path = CHECKPOINTING_YAML
 
     init_from: LoadingMode
-    saving_freq: int
     main_metric: MetricName
     directory: str = CHECKPOINTS_DIR
 

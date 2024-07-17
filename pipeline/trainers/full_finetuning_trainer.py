@@ -1,28 +1,28 @@
-from pipeline.outputs.checkpointing import CheckpointManager
-from pipeline.outputs.loggers.logger_base import LoggerBase
+from pipeline.outputs.checkpointing import Checkpoint, CheckpointManager
+from pipeline.outputs.loggers.logger_base import Log, LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 from pipeline.trainers.trainer_base import TrainerBase
 from pipeline.trainers.utils.fused_sampler import FusedSampler
 from pipeline.trainers.utils.schedulers import get_lr_from_cosine_scheduler_with_linear_warmup
 
+import warnings
 from functools import partial
 from typing import Literal
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from datasets import Dataset
 from torch.utils.data import DataLoader
 from tqdm.auto import trange, tqdm
-from transformers import PreTrainedTokenizerBase
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
 # TODO: refactor (use TrainerBase class)
 # TODO: test determinism and everything else
 class FullFineTuningTrainer(TrainerBase):
     def __init__(self,
-                 model: nn.Module,
+                 model: PreTrainedModel,
                  tokenizer: PreTrainedTokenizerBase,
                  train_ds: Dataset,
                  valid_ds: Dataset | None,
@@ -32,6 +32,7 @@ class FullFineTuningTrainer(TrainerBase):
                  # iteration parameters
                  max_iters: int,
                  valid_freq: int | None,
+                 checkpointing_freq: int | None,
                  gradient_accumulation_steps: int,
                  micro_batch_size: int,
                  # optimizer
@@ -64,6 +65,14 @@ class FullFineTuningTrainer(TrainerBase):
         self.logger = logger
 
         # iterations
+        self.checkpointing_freq = checkpointing_freq
+
+        if checkpointing_freq is None:
+            self.checkpointing_freq = float('inf')
+        elif valid_freq is not None and valid_freq != checkpointing_freq:
+            warnings.warn('Validation and checkpointing are not synchronized (valid_freq != checkpointing_freq). '
+                          'Resulting checkpoints will not contain validation metrics.')
+
         self.start_iter = checkpointer.get_iteration_number()
         self.max_iters = max_iters
         self.gradient_accumulation_steps = gradient_accumulation_steps
@@ -246,15 +255,19 @@ class FullFineTuningTrainer(TrainerBase):
             self.grad_scaler.update()
             self.optimizer.zero_grad(set_to_none=True)
 
+            log = Log(
+                iteration_number=iter_num,
+                train_metrics={name: metric.batch_commit() for name, metric in self.train_metrics.items()},
+            )
             if (iter_num + 1) % self.valid_freq == 0:
-                valid_log = {'iter_num': iter_num}  # TODO: add to the statistics.py
-                valid_log.update(self.validate(verbose))
-                self.logger.valid_log(valid_log)
+                log['valid_metrics'] = self.validate(verbose)
+            self.logger.log(log)
 
-            train_log = {'iter_num': iter_num}  # TODO: add to the statistics.py
-            train_log.update({name: metric.batch_commit() for name, metric in self.train_metrics.items()})
-            self.logger.train_log(train_log)
-
-            # TODO: add checkpointing
+            if (iter_num + 1) % self.checkpointing_freq == 0:
+                self.checkpointer.save_checkpoint(Checkpoint(
+                    metrics=log,
+                    model=self.model,
+                    optimizer_state=self.optimizer.state_dict(),
+                ))
 
             pbar_accumulation.reset()

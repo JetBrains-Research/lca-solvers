@@ -1,8 +1,9 @@
 .idea
 .ipynb_checkpoints
 **/__pycache__/
-data_processing
+runs/**/checkpoints
+runs/**/wandb
+runs/test
 venv
 main.ipynb
 main.py
-runs

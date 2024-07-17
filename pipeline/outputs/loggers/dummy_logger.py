@@ -1,16 +1,12 @@
-from pipeline.outputs.loggers.logger_base import JsonAllowedTypes, LoggerBase
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.outputs.loggers.logger_base import Message, Log, LoggerBase
 
 
 class DummyLogger(LoggerBase):
     def __init__(self, *_args, **_kwargs) -> None:
         pass
 
-    def train_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
+    def log(self, metrics: Log) -> Log:
         return metrics
 
-    def valid_log(self, metrics: dict[MetricName, MetricValue]) -> dict[MetricName, MetricValue]:
-        return metrics
-
-    def message(self, message: str | dict[str, JsonAllowedTypes]) -> str | dict[str, JsonAllowedTypes]:
+    def message(self, message: Message) -> Message:
         return message

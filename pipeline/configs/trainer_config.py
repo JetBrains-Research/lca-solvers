@@ -13,6 +13,7 @@ class FullFineTuningTrainerConfig(ConfigBase):
     # Iteration parameters
     max_iters: int
     valid_freq: int | None  # None means no validation at all
+    checkpointing_freq: int | None  # None means no checkpointing at all
     gradient_accumulation_steps: int
     micro_batch_size: int
 

@@ -1,6 +1,7 @@
 # Iteration parameters
 max_iters: 2048
 valid_freq: 256
+checkpointing_freq: 256
 gradient_accumulation_steps: 16
 micro_batch_size: 1
 

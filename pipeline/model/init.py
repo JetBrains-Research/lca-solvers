@@ -3,10 +3,15 @@ from pipeline.environment.hardware import get_free_device, get_optimal_dtype
 from enum import Enum
 
 import torch
-import torch.nn as nn
 from transformers.models.auto import MODEL_FOR_CAUSAL_LM_MAPPING
 from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, PreTrainedTokenizerBase
+from transformers import (
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    AutoConfig,
+    PreTrainedModel,
+    PreTrainedTokenizerBase,
+)
 
 
 class AttentionImplementation(str, Enum):
@@ -51,7 +56,7 @@ def init_model(load_from: str | None,
                dtype: torch.dtype,
                attn_implementation: AttentionImplementation | None,
                compile: bool,  # noqa: built-in function that won't be used
-               ) -> nn.Module:
+               ) -> PreTrainedModel:
     if device is None:
         device = get_free_device()
     if dtype is None:
@@ -84,7 +89,7 @@ def init_tokenizer_model(load_from: str | None,
                          dtype: torch.dtype,
                          attn_implementation: AttentionImplementation | None,
                          compile: bool,  # noqa: built-in function that won't be used
-                         ) -> tuple[PreTrainedTokenizerBase, nn.Module]:
+                         ) -> tuple[PreTrainedTokenizerBase, PreTrainedModel]:
     return (
         init_tokenizer(tokenizer_name, trust_remote_code),
         init_model(load_from, model_name, trust_remote_code, use_cache, device, dtype, attn_implementation, compile),
