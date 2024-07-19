@@ -53,6 +53,15 @@ class CheckpointManager:
         self._optim_state_filename = optim_state_filename
         self._metrics_filename = metrics_filename
 
+    def get_wandb_resume_mode(self) -> Literal['allow', 'never'] | None:
+        match self.init_from:
+            case LoadingMode.SCRATCH:
+                return None
+            case LoadingMode.RESUME:
+                return 'allow'
+            case _:
+                return 'never'
+
     def load_metrics(self, checkpoint_dir: str) -> Log:
         metrics_file = os.path.join(checkpoint_dir, self._metrics_filename)
         with open(metrics_file) as stream:

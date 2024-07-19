@@ -62,6 +62,12 @@ class LocalLogger(LoggerBase):
             [train_csv, valid_csv, stdout_file, stderr_file],
         )
 
+        if os.path.exists(train_csv):
+            with open(train_csv) as stream:
+                self.last_logged_iter = max(map(lambda x: int(x.split(',')[0]), stream.readlines()[1:]))
+        else:
+            self.last_logged_iter = -1
+
         self.train_csv = train_csv
         self.valid_csv = valid_csv
 
@@ -90,17 +96,21 @@ class LocalLogger(LoggerBase):
 
     @staticmethod
     def write_metrics_to_csv(metrics: dict[MetricName, MetricValue], path: str) -> None:
-        with open(path, mode='a', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=metrics.keys())
-            if file.tell() == 0:
+        with open(path, mode='a', newline='') as stream:
+            writer = csv.DictWriter(stream, fieldnames=metrics.keys())
+            if stream.tell() == 0:
                 writer.writeheader()
             writer.writerow(metrics)
 
     def log(self, metrics: Log) -> Log:
+        if metrics['iteration_number'] <= self.last_logged_iter:
+            return metrics  # repeated iterations between checkpoints
+
         iter_num = {'iter_num': metrics['iteration_number']}
         self.write_metrics_to_csv(iter_num | metrics['train_metrics'], self.train_csv)
         if 'valid_metrics' in metrics:
             self.write_metrics_to_csv(iter_num | metrics['valid_metrics'], self.valid_csv)
+
         return metrics
 
     def message(self, message: Message) -> Message:

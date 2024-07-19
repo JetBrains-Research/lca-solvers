@@ -2,7 +2,7 @@ from pipeline.configs.config_base import ConfigBase
 from pipeline.environment.run_directory import LOGS_DIR, LOGGER_YAML, get_run_name
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any
 
 
 @dataclass
@@ -25,4 +25,3 @@ class WandbLoggerConfig(LocalLoggerConfig):
     config: dict[str, Any] | None = None
     group: str | None = None
     notes: str | None = None
-    resume: Literal['allow', 'must', 'never', 'auto']

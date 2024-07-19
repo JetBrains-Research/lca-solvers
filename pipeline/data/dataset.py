@@ -10,7 +10,7 @@ from datasets import Dataset
 def train_test_split(dataset: Dataset,
                      test_size: int,
                      upper_bound_per_repo: int,
-                     random_seed: int | None,
+                     random_seed: int | None = None,
                      ) -> tuple[Dataset, Dataset | None]:
     if test_size == 0:
         return dataset, None
@@ -25,7 +25,6 @@ def train_test_split(dataset: Dataset,
 
     queue = list(queue.items())
     generator.shuffle(queue)
-    # TODO: test correlation on number of samples per repo and its position in queue - must be 0
 
     train_repos_ids = set(range(len(dataset)))
     test_repos_ids = set()
@@ -49,7 +48,7 @@ def train_test_split(dataset: Dataset,
     train_ds = dataset.select(train_repos_ids)
     test_ds = dataset.select(test_repos_ids)
 
-    return train_ds, test_ds  # TODO: show disjointness
+    return train_ds, test_ds
 
 
 def set_transform(train_ds: Dataset,

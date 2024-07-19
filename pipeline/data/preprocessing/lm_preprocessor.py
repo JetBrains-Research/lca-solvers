@@ -11,7 +11,6 @@ import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 
-# TODO: test
 class LMPreprocessor(PreprocessorBase):
     def __init__(self,
                  tokenizer: PreTrainedTokenizerBase,

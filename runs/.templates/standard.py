@@ -33,6 +33,9 @@ def main() -> None:
     split_config = SplitConfig.from_yaml()
     trainer_config = FullFineTuningTrainerConfig.from_yaml()
 
+    # checkpointing
+    checkpointer = CheckpointManager(**checkpointing_config.dict)
+
     # logging
     logger_config.config = {
         'checkpointing': {'name': CheckpointManager.__name__, **checkpointing_config.dict},
@@ -44,10 +47,7 @@ def main() -> None:
         'logger': {'name': WandbLogger.__name__, **logger_config.dict},
         'trainer': {'name': FullFineTuningTrainer.__name__, **trainer_config.dict},
     }
-    logger = WandbLogger(**logger_config.dict)
-
-    # checkpointing
-    checkpointer = CheckpointManager(**checkpointing_config.dict)
+    logger = WandbLogger(checkpointer, **logger_config.dict)
 
     # tokenizer and model
     load_from = checkpointer.get_model_subdirectory()

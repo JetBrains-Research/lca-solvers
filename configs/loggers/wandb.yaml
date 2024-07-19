@@ -3,4 +3,3 @@ valid_csv: valid.csv
 stdout_file: stdout.json
 stderr_file: stderr.json
 project: LCA Context Composers
-resume: allow

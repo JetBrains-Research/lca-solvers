@@ -6,7 +6,7 @@ import warnings
 from typing import Iterable
 
 
-class PathDistanceComposer(RankingComposer):  # TODO: test
+class PathDistanceComposer(RankingComposer):
     @staticmethod
     def _path_distance(path_from: str, path_to: str) -> int:
         path_from = os.path.normpath(path_from)
