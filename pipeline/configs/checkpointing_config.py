@@ -11,7 +11,7 @@ from typing import Callable
 class CheckpointManagerConfig(ConfigBase):
     _default_path = CHECKPOINTING_YAML
 
-    init_from: LoadingMode
+    init_from: LoadingMode | str
     main_metric: MetricName
     directory: str = CHECKPOINTS_DIR
 
@@ -24,4 +24,5 @@ class CheckpointManagerConfig(ConfigBase):
     metrics_filename: str = 'metrics.json'  # should be .json
 
     def __post_init__(self) -> None:
-        self.init_from = LoadingMode(self.init_from)
+        if self.init_from in set(LoadingMode):
+            self.init_from = LoadingMode(self.init_from)

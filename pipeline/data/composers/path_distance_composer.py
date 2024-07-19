@@ -12,8 +12,9 @@ class PathDistanceComposer(RankingComposer):  # TODO: test
         path_from = os.path.normpath(path_from)
         path_to = os.path.normpath(path_to)
 
-        if path_from == path_to:  # TODO: hardcode one exception in train dataset
-            warnings.warn(f'Data leak: the {path_from} completion file is contained in the repo snapshot.')
+        if path_from == path_to:
+            warnings.warn(f'Data leakage: the {path_from} completion file is contained in the repo snapshot.')
+            return 1_000_000_000  # TODO: remove temporary hardcoded solution for data leakage
 
         divided_path_from = path_from.split(os.path.sep)
         divided_path_to = path_to.split(os.path.sep)

@@ -31,10 +31,10 @@ class MetricBase(ABC):
 
 def ema_factory(metric_cls: Type[MetricBase]) -> Type[MetricBase]:
     class EMAMetric(metric_cls, ABC):
-        def __init__(self, ema_alpha: float) -> None:
+        def __init__(self, ema_alpha: float, ema_state: float | None = None) -> None:
             super().__init__()
             self.ema_alpha = ema_alpha
-            self.ema_state = None
+            self.ema_state = ema_state
 
         def batch_commit(self) -> MetricValue:
             batch_metric = super().batch_commit()

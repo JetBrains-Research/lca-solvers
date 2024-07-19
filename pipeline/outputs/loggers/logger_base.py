@@ -6,7 +6,7 @@ from typing_extensions import NotRequired
 
 T = TypeVar('T')
 JsonAllowedTypes = dict | list | tuple | str | int | float | bool | None
-Message = str | dict[str, JsonAllowedTypes]
+Message = str | int | float | dict[str, JsonAllowedTypes]
 
 
 class Log(TypedDict):

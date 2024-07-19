@@ -1,4 +1,6 @@
-import math
+from pipeline.data.composers.base_composers import ComposerBase
+from pipeline.data.preprocessing.preprocessor_base import PreprocessorBase
+
 import random
 from collections import defaultdict
 
@@ -6,10 +8,13 @@ from datasets import Dataset
 
 
 def train_test_split(dataset: Dataset,
-                     test_size: int,  # TODO: edge case - 0
+                     test_size: int,
                      upper_bound_per_repo: int,
                      random_seed: int | None,
                      ) -> tuple[Dataset, Dataset | None]:
+    if test_size == 0:
+        return dataset, None
+
     generator = random.Random(random_seed)
     queue = defaultdict(list)
     repos_enum = list(enumerate(dataset['repo']))
@@ -47,5 +52,12 @@ def train_test_split(dataset: Dataset,
     return train_ds, test_ds  # TODO: show disjointness
 
 
-def stratified_train_test_split() -> tuple[Dataset, Dataset]:
-    pass  # TODO: Can it provide less biased estimates? What strategies can be used?
+def set_transform(train_ds: Dataset,
+                  test_ds: Dataset | None,
+                  composer: ComposerBase,
+                  preprocessor: PreprocessorBase,
+                  ) -> None:
+    transform = lambda x: preprocessor(composer.compose_batch(x))
+    train_ds.set_transform(transform)
+    if test_ds is not None:
+        test_ds.set_transform(transform)

@@ -17,56 +17,54 @@ from pipeline.trainers.full_finetuning_trainer import FullFineTuningTrainer
 
 # main functions
 from pipeline.model.init import init_tokenizer_model
-from pipeline.data.dataset import train_test_split
+from pipeline.data.dataset import train_test_split, set_transform
 
 from datasets import load_dataset
 
 
 def main() -> None:
-    # checkpointing
+    # configs
     checkpointing_config = CheckpointManagerConfig.from_yaml()
-    checkpointer = CheckpointManager(**checkpointing_config.dict)
-
-    # tokenizer and model
-    model_config = ModelConfig.from_yaml()
-    load_from = checkpointer.get_model_subdirectory()
-    tokenizer, model = init_tokenizer_model(load_from, **model_config.dict)
-
-    # dataset and its split
-    dataset_config = DatasetConfig.from_yaml()
-    split_config = SplitConfig.from_yaml()
-    dataset = load_dataset(**dataset_config.dict)
-    train_ds, valid_ds = train_test_split(dataset, **split_config.dict)
-
-    # composer
     composer_config = ComposerConfig.from_yaml()
-    composer = PathDistanceComposer(**composer_config.dict)
-
-    # preprocessor
+    dataset_config = DatasetConfig.from_yaml()
+    logger_config = WandbLoggerConfig.from_yaml()
+    model_config = ModelConfig.from_yaml()
     preprocessor_config = LMPreprocessorConfig.from_yaml()
-    preprocessor = LMPreprocessor(tokenizer, **preprocessor_config.dict)
-
-    # set dataset transform
-    transform = lambda x: preprocessor(composer.compose_batch(x))
-    train_ds.set_transform(transform)
-    valid_ds.set_transform(transform)
-
-    # trainer config
+    split_config = SplitConfig.from_yaml()
     trainer_config = FullFineTuningTrainerConfig.from_yaml()
 
     # logging
-    logger_config = WandbLoggerConfig.from_yaml()
     logger_config.config = {
-        'checkpointing': checkpointing_config.dict,
+        'checkpointing': {'name': CheckpointManager.__name__, **checkpointing_config.dict},
         'model': model_config.dict,
         'dataset': dataset_config.dict,
         'split': split_config.dict,
         'composer': {'name': PathDistanceComposer.__name__, **composer_config.dict},
-        'preprocessor': preprocessor_config.dict,
-        'logger': logger_config.dict,
-        'trainer': trainer_config.dict,
+        'preprocessor': {'name': LMPreprocessor.__name__, **preprocessor_config.dict},
+        'logger': {'name': WandbLogger.__name__, **logger_config.dict},
+        'trainer': {'name': FullFineTuningTrainer.__name__, **trainer_config.dict},
     }
     logger = WandbLogger(**logger_config.dict)
+
+    # checkpointing
+    checkpointer = CheckpointManager(**checkpointing_config.dict)
+
+    # tokenizer and model
+    load_from = checkpointer.get_model_subdirectory()
+    if load_from is None:
+        logger.message('The model is initialized from Hugging Face Hub.')
+    else:
+        logger.message(f'The model is initialized from {load_from}.')
+    tokenizer, model = init_tokenizer_model(load_from, **model_config.dict)
+
+    # composer and preprocessor
+    composer = PathDistanceComposer(**composer_config.dict)
+    preprocessor = LMPreprocessor(tokenizer, **preprocessor_config.dict)
+
+    # dataset
+    dataset = load_dataset(**dataset_config.dict)
+    train_ds, valid_ds = train_test_split(dataset, **split_config.dict)
+    set_transform(train_ds, valid_ds, composer, preprocessor)
 
     trainer = FullFineTuningTrainer(
         model=model,

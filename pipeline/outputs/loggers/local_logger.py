@@ -29,33 +29,19 @@ class JsonFormatter(logging.Formatter):
 
 
 class JsonHandler(logging.FileHandler):
-    def __init__(self, path: str, *args, **kwargs) -> None:
-        super().__init__(path, *args, **kwargs)
-
-        if not os.path.exists(path) or os.stat(path).st_size == 0:
+    def emit(self, record: logging.LogRecord) -> None:
+        if not os.path.exists(self.baseFilename) or os.stat(self.baseFilename).st_size == 0:
             self.stream.write('[\n')
-            self.first_record = True
         else:
             self.stream.seek(self.stream.tell() - 1)
             self.stream.truncate()
-            self.first_record = False
-
-    def emit(self, record: logging.LogRecord) -> None:
-        if not self.first_record:
-            self.stream.seek(self.stream.tell() - 1)
-            self.stream.truncate()
             self.stream.write(',\n')
-        self.first_record = False
 
         super().emit(record)
 
     def close(self) -> None:
-        if self.first_record:
-            self.stream.seek(0)
-            self.stream.truncate()
-        else:
-            self.stream.seek(self.stream.tell() - 1)
-            self.stream.write(']')
+        self.stream.seek(self.stream.tell() - 1)
+        self.stream.write(']')
 
         super().close()
 
@@ -113,7 +99,8 @@ class LocalLogger(LoggerBase):
     def log(self, metrics: Log) -> Log:
         iter_num = {'iter_num': metrics['iteration_number']}
         self.write_metrics_to_csv(iter_num | metrics['train_metrics'], self.train_csv)
-        self.write_metrics_to_csv(iter_num | metrics['valid_metrics'], self.valid_csv)
+        if 'valid_metrics' in metrics:
+            self.write_metrics_to_csv(iter_num | metrics['valid_metrics'], self.valid_csv)
         return metrics
 
     def message(self, message: Message) -> Message:

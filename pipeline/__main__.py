@@ -43,10 +43,13 @@ def main() -> None:
         raise ValueError(f'Directory {run_dir} already exists.')
 
     os.mkdir(run_dir)
-    os.mkdir(os.path.join(run_dir, CHECKPOINTS_DIR))
-    os.mkdir(os.path.join(run_dir, CONFIGS_DIR))
-    os.mkdir(os.path.join(run_dir, LOGS_DIR))
 
+    for dest_dir in (CHECKPOINTS_DIR, LOGS_DIR):
+        dest_dir = os.path.join(run_dir, dest_dir)
+        os.mkdir(dest_dir)
+        os.mknod(os.path.join(dest_dir, '.gitkeep'))
+
+    os.mkdir(os.path.join(run_dir, CONFIGS_DIR))
     for src_file, (_, src_dir, dest_file) in zip(list(vars(args).values())[1:], copy_triplets):
         src = os.path.join(src_dir, src_file)
         dest = os.path.join(run_dir, dest_file)

@@ -19,13 +19,14 @@ min_lr: 1.0e-7
 
 # Metrics
 train_metrics: [cross_entropy, detached_cross_entropy, ema_cross_entropy, ema_detached_cross_entropy]
+train_ema_alpha: 0.01
 valid_metrics: [cross_entropy, detached_cross_entropy, ema_cross_entropy, ema_detached_cross_entropy]
-ema_alpha: 0.05
+valid_ema_alpha: null
 
 # DataLoader
 shuffle: True
 drop_last: False
-num_workers: 2
+num_workers: 4
 prefetch_factor: 2
 random_seed: 1337
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
+from pprint import pformat
 from typing import TypeVar, Type
 
 import yaml
@@ -17,6 +18,9 @@ class ConfigBase(ABC):
     @abstractmethod
     def _default_path(self) -> str:
         raise NotImplementedError
+
+    def __str__(self) -> str:
+        return pformat(self)
 
     @classmethod
     def from_yaml(cls: Type[T], path: str | None = None) -> T:

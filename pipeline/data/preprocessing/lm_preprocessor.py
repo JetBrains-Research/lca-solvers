@@ -12,16 +12,19 @@ from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 
 # TODO: test
-# TODO: refactor - reduce repetitive code
 class LMPreprocessor(PreprocessorBase):
     def __init__(self,
                  tokenizer: PreTrainedTokenizerBase,
                  max_seq_len: int,
                  context_tokens: int | float,
-                 loss_ratio: float,  # TODO: check edge cases - (0, 1]
+                 loss_ratio: float,
                  num_chars_per_token: int,
                  verbose: int,
                  ) -> None:
+        if not 0 < loss_ratio <= 1:
+            raise ValueError('loss_ratio must be selected from the interval (0, 1]. '
+                             f'Got {loss_ratio} instead.')
+
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len + 1  # for targets
 
@@ -32,33 +35,29 @@ class LMPreprocessor(PreprocessorBase):
             context_tokens = int(max_seq_len * context_tokens)
         self.context_tokens = context_tokens
 
-        self.loss_ratio = loss_ratio
+        self.loss_ratio = loss_ratio  # can be used in the future in get_loss_mask
         self._loss_mask = torch.zeros(1, max_seq_len, dtype=torch.bool)
         self._loss_mask[:, -math.ceil(loss_ratio * max_seq_len):] = 1
 
         self.num_chars_per_token = num_chars_per_token
         self.verbose = verbose
 
-    def _inc_num_chars_per_token(self, traceback_msg: str = '') -> None:
+    def _inc_num_chars_per_token(self) -> None:
         old_value = self.num_chars_per_token
         self.num_chars_per_token *= 2
 
         if self.verbose >= 1:
-            warnings.warn(traceback_msg +
-                          f'num_chars_per_token has been increased from {old_value} to {self.num_chars_per_token} '
-                          'due to an underestimation of the length of the truncated character sequence.')
+            warnings.warn(
+                f'num_chars_per_token has been increased from {old_value} to {self.num_chars_per_token} '
+                'due to an underestimation of the length of the truncated character sequence.')
 
     def tokenize_pre_context_prompt(self, prompts: list[str]) -> BatchEncoding:
         trunc_upper_bound = self.max_seq_len - self.context_tokens
         char_trunc_upper_bound = self.num_chars_per_token * trunc_upper_bound
 
-        tokenized_prompts = self.tokenizer(  # TODO: refactor args
+        tokenized_prompts = self.tokenizer(
             text=[prompt[-char_trunc_upper_bound:] for prompt in prompts],
             add_special_tokens=True,  # bos
-            padding=False,
-            truncation=False,
-            max_length=None,
-            return_tensors=None,
             return_attention_mask=False,
             return_length=True,
         )
@@ -69,8 +68,7 @@ class LMPreprocessor(PreprocessorBase):
         overflow_tokens = (tokenized_prompts.length > trunc_upper_bound)
 
         if torch.any(overflow_chars & underflow_tokens):
-            self._inc_num_chars_per_token(
-                traceback_msg='Warning message from LMPreprocessor.tokenize_pre_context_prompt method: ')  # TODO: automatic naming
+            self._inc_num_chars_per_token()
             return self.tokenize_pre_context_prompt(prompts)
 
         for i in range(len(prompts)):
@@ -95,10 +93,6 @@ class LMPreprocessor(PreprocessorBase):
         tokenized_completions = self.tokenizer(
             text=trunc_completions,
             add_special_tokens=False,
-            padding=False,
-            truncation=False,
-            max_length=None,
-            return_tensors=None,
             return_attention_mask=False,
             return_offsets_mapping=True,
             return_length=True,
@@ -110,8 +104,7 @@ class LMPreprocessor(PreprocessorBase):
         overflow_tokens = (tokenized_completions.length > trunc_upper_bound)
 
         if torch.any(overflow_chars & underflow_tokens):
-            self._inc_num_chars_per_token(
-                traceback_msg='Warning message from LMPreprocessor.tokenize_composed_completion method: ')  # TODO: automatic naming
+            self._inc_num_chars_per_token()
             return self.tokenize_composed_completion(completions, prompts_len)
 
         tokenized_completions['newline_positions'] = [
@@ -138,10 +131,6 @@ class LMPreprocessor(PreprocessorBase):
         tokenized_contexts = self.tokenizer(
             text=[ctx[-char_trunc_upper_bound:] for ctx in contexts],
             add_special_tokens=False,
-            padding=False,
-            truncation=False,
-            max_length=None,
-            return_tensors=None,
             return_attention_mask=False,
             return_length=True,
         )
@@ -152,8 +141,7 @@ class LMPreprocessor(PreprocessorBase):
         overflow_tokens = (tokenized_contexts.length > contexts_len)
 
         if torch.any(overflow_chars & underflow_tokens):
-            self._inc_num_chars_per_token(
-                traceback_msg='Warning message from LMPreprocessor.tokenize_composed_context method: ')  # TODO: automatic naming
+            self._inc_num_chars_per_token()
             return self.tokenize_composed_context(contexts, prompts_len, completions_len)
 
         if torch.any(~overflow_chars & underflow_tokens):
@@ -202,9 +190,6 @@ class LMPreprocessor(PreprocessorBase):
         return category_ids
 
     def __call__(self, batch: BatchComposedDatapoint) -> PreprocessedBatch:
-        # TODO: bos tokens must be only in the begging of sample
-        # TODO: warn if padding is used
-
         tokenized_prompts = self.tokenize_pre_context_prompt(
             batch['pre_context_prompt'],
         )

@@ -15,7 +15,7 @@ class WandbLogger(LocalLogger):
                  **wandb_init_kwargs,
                  ) -> None:
         super().__init__(train_csv, valid_csv, stdout_file, stderr_file, directory)
-        wandb.init(*wandb_init_args, **wandb_init_kwargs)
+        wandb.init(*wandb_init_args, **wandb_init_kwargs)  # TODO: test resume
 
     def log(self, metrics: Log) -> Log:
         wandb_log = {'train': metrics['train_metrics']}

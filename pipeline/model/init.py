@@ -15,10 +15,10 @@ from transformers import (
 
 
 class AttentionImplementation(str, Enum):
-    # nondeterministic:
+    # nondeterministic
     FA2 = 'flash_attention_2'
     SDPA = 'sdpa'
-    # deterministic:
+    # deterministic
     EAGER = 'eager'
 
 

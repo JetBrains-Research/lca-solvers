@@ -1,8 +1,6 @@
 from pipeline.outputs.checkpointing import Checkpoint, CheckpointManager
 from pipeline.outputs.loggers.logger_base import Log, LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
-from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
-from pipeline.trainers.trainer_base import TrainerBase
 from pipeline.trainers.utils.fused_sampler import FusedSampler
 from pipeline.trainers.utils.schedulers import get_lr_from_cosine_scheduler_with_linear_warmup
 
@@ -18,9 +16,8 @@ from tqdm.auto import trange, tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
-# TODO: refactor (use TrainerBase class)
-# TODO: test determinism and everything else
-class FullFineTuningTrainer(TrainerBase):
+# TODO: test checkpointing and resume
+class FullFineTuningTrainer:
     def __init__(self,
                  model: PreTrainedModel,
                  tokenizer: PreTrainedTokenizerBase,
@@ -47,8 +44,9 @@ class FullFineTuningTrainer(TrainerBase):
                  min_lr: float | None,
                  # metrics
                  train_metrics: list[MetricName],
+                 train_ema_alpha: float,
                  valid_metrics: list[MetricName],
-                 ema_alpha: float,
+                 valid_ema_alpha: float | None,
                  # DataLoader
                  shuffle: bool,
                  drop_last: bool,
@@ -69,6 +67,7 @@ class FullFineTuningTrainer(TrainerBase):
 
         if checkpointing_freq is None:
             self.checkpointing_freq = float('inf')
+            self.logger.message('Checkpointing is disabled.')
         elif valid_freq is not None and valid_freq != checkpointing_freq:
             warnings.warn('Validation and checkpointing are not synchronized (valid_freq != checkpointing_freq). '
                           'Resulting checkpoints will not contain validation metrics.')
@@ -82,11 +81,13 @@ class FullFineTuningTrainer(TrainerBase):
         if random_seed is not None:
             torch.manual_seed(random_seed)
         torch.set_float32_matmul_precision(fp32_matmul_precision)
+        logger.message(f"Set the FP32 matrix multiplication precision to '{fp32_matmul_precision}'.")
 
         # validation
         if valid_ds is None and valid_freq is None and not valid_metrics:
             self.valid_freq = float('inf')
             self.valid_dl = None
+            self.logger.message('Validation is disabled.')
         elif valid_ds is not None and valid_freq is not None and valid_metrics:
             self.valid_freq = valid_freq
             self.valid_dl = DataLoader(
@@ -100,6 +101,11 @@ class FullFineTuningTrainer(TrainerBase):
                 persistent_workers=(valid_freq > max_iters),
                 pin_memory_device=str(model.device),
             )
+
+            if valid_ema_alpha is None:
+                valid_ema_alpha = 1 - (1 - train_ema_alpha) ** valid_freq
+                self.logger.message(f'valid_ema_alpha automatically set to {valid_ema_alpha:.05f}.')
+
         else:
             raise ValueError('The valid_ds, valid_freq and valid_metrics arguments do not match each other.')
 
@@ -144,15 +150,8 @@ class FullFineTuningTrainer(TrainerBase):
             raise ValueError('The warmup_iters, lr_decay_iters and min_lr arguments do not match each other.')
 
         # metrics
-        self.train_metrics = dict()
-        self.valid_metrics = dict()
-        for metrics_dict, names in ([self.train_metrics, train_metrics],
-                                    [self.valid_metrics, valid_metrics]):
-            for name in names:
-                if name.startswith('ema_'):
-                    metrics_dict[name] = METRICS_REGISTRY[name](ema_alpha)
-                else:
-                    metrics_dict[name] = METRICS_REGISTRY[name]()
+        self.train_metrics = self.checkpointer.init_metrics('train_metrics', train_metrics, train_ema_alpha)
+        self.valid_metrics = self.checkpointer.init_metrics('valid_metrics', valid_metrics, valid_ema_alpha)
 
     def _init_adamw(self,
                     learning_rate: float,
@@ -185,7 +184,7 @@ class FullFineTuningTrainer(TrainerBase):
             iterable=self.valid_dl,
             desc='Validation steps',
             position=1,
-            leave=False,
+            leave=None,
             disable=not verbose,
         )
 
@@ -221,11 +220,13 @@ class FullFineTuningTrainer(TrainerBase):
             self.gradient_accumulation_steps,
             desc='Gradient accumulation steps',
             position=1,
-            leave=False,
+            leave=None,
             disable=not verbose,
         )
 
         for iter_num in pbar_iter:
+            pbar_accumulation.reset()
+
             lr = self.get_lr(iter_num)
             for param_group in self.optimizer.param_groups:
                 param_group['lr'] = lr
@@ -269,5 +270,3 @@ class FullFineTuningTrainer(TrainerBase):
                     model=self.model,
                     optimizer_state=self.optimizer.state_dict(),
                 ))
-
-            pbar_accumulation.reset()

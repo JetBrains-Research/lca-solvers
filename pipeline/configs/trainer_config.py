@@ -31,16 +31,16 @@ class FullFineTuningTrainerConfig(ConfigBase):
 
     # Metrics (see METRICS_REGISTRY in pipeline/outputs/metrics/metrics_registry.py)
     train_metrics: list[MetricName]
+    train_ema_alpha: float  # (see ema_factory in pipeline/outputs/metrics/metric_base.py)
     valid_metrics: list[MetricName]  # empty list means no validation at all
-    ema_alpha: float  # (see ema_factory in pipeline/outputs/metrics/metric_base.py)
-    # TODO: different ema_alpha for validation (consider valid_freq?)
+    valid_ema_alpha: float | None  # if None, will be calculated as 1 - (1 - train_ema_alpha) ** valid_freq
 
     # DataLoader
     shuffle: bool
     drop_last: bool
     num_workers: int
-    prefetch_factor: int
+    prefetch_factor: int | None
     random_seed: int | None
 
-    # Floating point  TODO: another config for all global settings?
+    # Floating point
     fp32_matmul_precision: Literal['highest', 'high', 'medium']
