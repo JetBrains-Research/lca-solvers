@@ -16,7 +16,6 @@ from tqdm.auto import trange, tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
-# TODO: test checkpointing and resume
 class FullFineTuningTrainer:
     def __init__(self,
                  model: PreTrainedModel,
