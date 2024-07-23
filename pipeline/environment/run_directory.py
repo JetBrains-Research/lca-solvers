@@ -38,7 +38,7 @@ TRAINERS_SRC_DIR = join_path('trainers')
 
 # default source configs
 SRC_CHECKPOINTING_YAML = 'standard.yaml'
-SRC_COMPOSER_YAML = 'standard.yaml'
+SRC_COMPOSER_YAML = 'empty.yaml'
 SRC_DATASET_YAML = 'train.yaml'
 SRC_LOGGER_YAML = 'wandb.yaml'
 SRC_MODEL_YAML = 'dseek1p3.yaml'

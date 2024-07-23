@@ -12,3 +12,13 @@ class ComposerConfig(ConfigBase):
     chunks_sep: str
     post_context_prompt: str
     path_comment_template: str
+
+
+@dataclass
+class InclusiveFileComposerConfig(ComposerConfig):
+    whitelist: list[str]
+
+
+@dataclass
+class ExclusiveFileComposerConfig(ComposerConfig):
+    blacklist: list[str]

@@ -1,8 +1,12 @@
+from pipeline.data.composers.chunking_mixins import ChunkerMixin
+from pipeline.data.composers.filtering_mixins import FilterMixin
+from pipeline.data.composers.harvesting_mixins import HarvesterMixin
+from pipeline.data.composers.ranking_mixins import RankerMixin
 from pipeline.data.composed_datapoint import ComposedDatapoint, BatchComposedDatapoint
 from pipeline.data.datapoint import Datapoint, BatchDatapoint
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable
+from typing import Any
 
 from datasets import Dataset
 
@@ -84,24 +88,11 @@ class ComposerBase(ABC):
         )
 
 
-class GrainedComposer(ComposerBase, ABC):
-    def chunk_datapoint(self, datapoint: Datapoint) -> Iterable[str]:
-        return [
-            self.path_comment_template.format(filename=fn, content=cnt)
-            for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
-        ]
-
-    def combine_chunks(self, chunks: Iterable[str]) -> str:
-        return self.chunks_sep.join(chunks)
-
-
-class RankingComposer(GrainedComposer):
-    @abstractmethod
-    def ranking_function(self, chunks: Iterable[str], datapoint: Datapoint) -> Iterable[int | float]:
-        raise NotImplementedError
-
+class GrainedComposer(ComposerBase, ChunkerMixin, FilterMixin, RankerMixin, HarvesterMixin):
     def compose_context(self, datapoint: Datapoint) -> str:
-        chunks = self.chunk_datapoint(datapoint)
-        ranks = self.ranking_function(chunks, datapoint)
+        chunks = self.chunk(datapoint)
+        chunks = self.filter(chunks, datapoint)
+        ranks = self.rank(chunks, datapoint)
         chunks = [chunk for _, chunk in sorted(zip(ranks, chunks), key=lambda x: x[0])]
-        return self.combine_chunks(chunks)
+        context = self.harvest(chunks, datapoint)
+        return context

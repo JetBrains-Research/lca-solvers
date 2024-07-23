@@ -1,12 +1,18 @@
-from pipeline.data.composers.base_composers import RankingComposer
+from pipeline.data.composers.chunking_mixins import Chunk
 from pipeline.data.datapoint import Datapoint
 
 import os
 import warnings
-from typing import Iterable
+from typing import Sequence
 
 
-class PathDistanceComposer(RankingComposer):
+class RankerMixin:
+    @staticmethod
+    def rank(chunks: Sequence[Chunk], _datapoint: Datapoint) -> Sequence[int | float]:
+        return range(len(chunks))
+
+
+class NegativePathDistance(RankerMixin):
     @staticmethod
     def _path_distance(path_from: str, path_to: str) -> int:
         path_from = os.path.normpath(path_from)
@@ -14,7 +20,6 @@ class PathDistanceComposer(RankingComposer):
 
         if path_from == path_to:
             warnings.warn(f'Data leakage: the {path_from} completion file is contained in the repo snapshot.')
-            return 1_000_000_000  # TODO: remove temporary hardcoded solution for data leakage
 
         divided_path_from = path_from.split(os.path.sep)
         divided_path_to = path_to.split(os.path.sep)
@@ -31,8 +36,8 @@ class PathDistanceComposer(RankingComposer):
 
         return num_residuals_from + num_residuals_to
 
-    def ranking_function(self, _chunks: Iterable[str], datapoint: Datapoint) -> Iterable[int | float]:
-        return map(
-            lambda x: -self._path_distance(x, datapoint.completion_file['filename']),
-            datapoint.repo_snapshot['filename'],
-        )
+    def rank(self, chunks: Sequence[Chunk], datapoint: Datapoint) -> Sequence[int | float]:
+        return [
+            -self._path_distance(chunk.metadata['filename'], datapoint.completion_file['filename'])
+            for chunk in chunks
+        ]
