@@ -20,6 +20,7 @@ class PreprocessorBase(ABC):
         Important note: different number of masked tokens in different
         micro-batches will break gradient accumulation, in which case
         the training loop should include corresponding gradient scaling.
+        *or we just don't care :)
         """
         raise NotImplementedError
 

@@ -1,3 +1,7 @@
+""" e.g.
+python3 -m pipeline <your-run-name> --src-composer-yaml=standard.yaml
+"""
+
 # config classes
 from pipeline.configs.checkpointing_config import CheckpointManagerConfig
 from pipeline.configs.composer_config import ComposerConfig
@@ -9,7 +13,7 @@ from pipeline.configs.split_config import SplitConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 # main classes
-from pipeline.data.composers.path_distance_composer import PathDistanceComposer
+from pipeline.data.composers.composers import PathDistanceComposer
 from pipeline.data.preprocessing.lm_preprocessor import LMPreprocessor
 from pipeline.outputs.checkpointing import CheckpointManager
 from pipeline.outputs.loggers.wandb_logger import WandbLogger

@@ -6,6 +6,7 @@ from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 
 import json
 import os
+import shutil
 import warnings
 from dataclasses import dataclass
 from enum import Enum
@@ -164,4 +165,17 @@ class CheckpointManager:
 
 
 class TopKCheckpointManager(CheckpointManager):
-    pass  # TODO
+    def __init__(self, max_checkpoints_num: int, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.max_checkpoints_num = max_checkpoints_num
+
+    def save_checkpoint(self, checkpoint: Checkpoint) -> None:
+        checkpoints = next(os.walk(self.directory))[1]
+        checkpoints = sorted(checkpoints, key=self.get_checkpoint_score)
+
+        while len(checkpoints) >= self.max_checkpoints_num:
+            checkpoint2del = checkpoints.pop()
+            checkpoint2del = os.path.join(self.directory, checkpoint2del)
+            shutil.rmtree(checkpoint2del)
+
+        super().save_checkpoint(checkpoint)

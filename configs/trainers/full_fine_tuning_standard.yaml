@@ -1,8 +1,8 @@
 # Iteration parameters
-max_iters: 2048
-valid_freq: 256
-checkpointing_freq: 256
-gradient_accumulation_steps: 16
+max_iters: 600
+valid_freq: 25
+checkpointing_freq: 25
+gradient_accumulation_steps: 64
 micro_batch_size: 1
 
 # AdamW optimizer
@@ -13,14 +13,14 @@ weight_decay: 0.01
 max_grad_norm: 2
 
 # Cosine lr scheduler with warmup
-warmup_iters: 81
-lr_decay_iters: 2048
+warmup_iters: 25
+lr_decay_iters: 600
 min_lr: 1.0e-7
 
 # Metrics
-train_metrics: [cross_entropy, detached_cross_entropy, ema_cross_entropy, ema_detached_cross_entropy]
+train_metrics: [cross_entropy, detached_cross_entropy]
 train_ema_alpha: 0.01
-valid_metrics: [cross_entropy, detached_cross_entropy, ema_cross_entropy, ema_detached_cross_entropy]
+valid_metrics: [cross_entropy, detached_cross_entropy]
 valid_ema_alpha: null
 
 # DataLoader

@@ -175,7 +175,7 @@ class FullFineTuningTrainer:
         return optimizer
 
     @torch.inference_mode
-    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
+    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:  # TODO: zero step
         training = self.model.training
         self.model.eval()
 

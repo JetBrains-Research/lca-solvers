@@ -11,6 +11,9 @@ import warnings
 from types import TracebackType
 from typing import NoReturn
 
+import datasets.utils.logging
+import transformers.utils.logging
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -93,6 +96,10 @@ class LocalLogger(LoggerBase):
 
         warnings.showwarning = self.warning_handler
         sys.excepthook = self.exception_handler
+
+        # redirect all HF logs (at least datasets and transformers)
+        datasets.utils.logging.get_logger().handlers = self.logger.handlers
+        transformers.utils.logging.get_logger().handlers = self.logger.handlers
 
     @staticmethod
     def write_metrics_to_csv(metrics: dict[MetricName, MetricValue], path: str) -> None:

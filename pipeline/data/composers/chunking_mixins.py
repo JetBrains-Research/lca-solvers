@@ -25,5 +25,5 @@ class FileGrainedChunker:
             # TODO: .values()
             for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
             # TODO: remove temporary hardcoded solution for data leakage
-            if fn != 'tinygrad/llops/ops_llvm.py'  # TODO: test
+            if fn != 'tinygrad/llops/ops_llvm.py'
         ]

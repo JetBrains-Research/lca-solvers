@@ -1,0 +1,4 @@
+max_seq_len: 16384
+context_tokens: 8192
+loss_ratio: 1
+num_chars_per_token: 6

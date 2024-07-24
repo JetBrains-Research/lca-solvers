@@ -26,3 +26,8 @@ class CheckpointManagerConfig(ConfigBase):
     def __post_init__(self) -> None:
         if self.init_from in set(LoadingMode):
             self.init_from = LoadingMode(self.init_from)
+
+
+@dataclass(kw_only=True)
+class TopKCheckpointManagerConfig(CheckpointManagerConfig):
+    max_checkpoints_num: int

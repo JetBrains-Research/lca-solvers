@@ -25,7 +25,8 @@ class LMPreprocessor(PreprocessorBase):
                              f'Got {loss_ratio} instead.')
 
         self.tokenizer = tokenizer
-        self.max_seq_len = max_seq_len + 1  # for targets
+        self.max_seq_len = max_seq_len
+        self.extended_seq_len = max_seq_len + 1  # for targets
 
         if isinstance(context_tokens, float):
             if not 0 <= context_tokens <= 1:
@@ -43,7 +44,7 @@ class LMPreprocessor(PreprocessorBase):
 
     def _inc_num_chars_per_token(self) -> None:
         old_value = self.num_chars_per_token
-        self.num_chars_per_token *= 2
+        self.num_chars_per_token = math.ceil(1.5 * self.num_chars_per_token)
 
         if self.verbose >= 1:
             warnings.warn(
@@ -51,7 +52,7 @@ class LMPreprocessor(PreprocessorBase):
                 'due to an underestimation of the length of the truncated character sequence.')
 
     def tokenize_pre_context_prompt(self, prompts: list[str]) -> BatchEncoding:
-        trunc_upper_bound = self.max_seq_len - self.context_tokens
+        trunc_upper_bound = self.extended_seq_len - self.context_tokens
         char_trunc_upper_bound = self.num_chars_per_token * trunc_upper_bound
 
         tokenized_prompts = self.tokenizer(
@@ -85,7 +86,7 @@ class LMPreprocessor(PreprocessorBase):
         return tokenized_prompts
 
     def tokenize_composed_completion(self, completions: list[str], prompts_len: torch.Tensor) -> BatchEncoding:
-        trunc_upper_bound = self.max_seq_len - self.context_tokens - prompts_len
+        trunc_upper_bound = self.extended_seq_len - self.context_tokens - prompts_len
         char_trunc_upper_bound = self.num_chars_per_token * max(trunc_upper_bound)
         trunc_completions = [completion[:char_trunc_upper_bound] for completion in completions]
 
@@ -124,7 +125,7 @@ class LMPreprocessor(PreprocessorBase):
                                   prompts_len: torch.Tensor,
                                   completions_len: torch.Tensor,
                                   ) -> BatchEncoding:
-        contexts_len = self.max_seq_len - prompts_len - completions_len
+        contexts_len = self.extended_seq_len - prompts_len - completions_len
         char_trunc_upper_bound = self.num_chars_per_token * max(contexts_len)
 
         tokenized_contexts = self.tokenizer(
@@ -153,18 +154,19 @@ class LMPreprocessor(PreprocessorBase):
 
         return tokenized_contexts
 
-    def get_loss_mask(self, batch_size: int) -> torch.Tensor:
+    def get_loss_mask(self, tokenized_completions: BatchEncoding) -> torch.Tensor:
+        batch_size = len(tokenized_completions.length)
         return self._loss_mask.expand(batch_size, -1)
 
     def get_category_ids(self,
-                         completion_lines: list[CompletionLines],
                          tokenized_completions: BatchEncoding,
-                         batch_size: int,
+                         completion_lines: list[CompletionLines],
                          ) -> torch.Tensor:
-        category_ids = torch.full((batch_size, self.max_seq_len - 1), UNDEFINED_CATEGORY_ID)
+        batch_size = len(tokenized_completions.length)
+        category_ids = torch.full((batch_size, self.max_seq_len), UNDEFINED_CATEGORY_ID)
 
         for sample_idx in range(batch_size):
-            t_completion_start = self.max_seq_len - tokenized_completions.length[sample_idx] - 1
+            t_completion_start = self.max_seq_len - tokenized_completions.length[sample_idx]
             newline_positions = tokenized_completions.newline_positions[sample_idx]
             offset_mapping = tokenized_completions.offset_mapping[sample_idx]
 
@@ -202,17 +204,20 @@ class LMPreprocessor(PreprocessorBase):
             tokenized_completions.length,
         )
 
-        batch_size = len(tokenized_completions.length)
         tokenized_batch = torch.tensor([sum(p_c_c, []) for p_c_c in zip(
             tokenized_prompts.input_ids,
             tokenized_contexts.input_ids,
-            tokenized_completions.input_ids
+            tokenized_completions.input_ids,
         )])
 
         return PreprocessedBatch(
             input_ids=tokenized_batch[:, :-1],
             target_ids=tokenized_batch[:, 1:],
-            loss_mask=self.get_loss_mask(batch_size),
+            loss_mask=self.get_loss_mask(
+                tokenized_completions=tokenized_completions,
+            ),
             category_ids=self.get_category_ids(
-                batch['completion_lines'], tokenized_completions, batch_size),
+                tokenized_completions=tokenized_completions,
+                completion_lines=batch['completion_lines'],
+            ),
         )
