@@ -11,6 +11,7 @@ class PreprocessedBatch(TypedDict):
     target_ids: torch.Tensor
     loss_mask: torch.Tensor
     category_ids: torch.Tensor
+    attention_mask: torch.Tensor
 
 
 class PreprocessorBase(ABC):

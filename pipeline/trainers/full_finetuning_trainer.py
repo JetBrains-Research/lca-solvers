@@ -189,9 +189,9 @@ class FullFineTuningTrainer:
 
         for micro_batch in valid_iter:
             micro_batch = [t.to(self.model.device) for t in micro_batch.values()]
-            input_ids, target_ids, loss_mask, category_ids = micro_batch
+            input_ids, target_ids, loss_mask, category_ids, attention_mask = micro_batch
 
-            model_output = self.model(input_ids)
+            model_output = self.model(input_ids, attention_mask=attention_mask)
 
             locals_copy = locals().copy()
             locals_copy.pop('self')
@@ -232,9 +232,9 @@ class FullFineTuningTrainer:
 
             for _ in range(self.gradient_accumulation_steps):
                 micro_batch = [t.to(self.model.device) for t in next(train_iter).values()]
-                input_ids, target_ids, loss_mask, category_ids = micro_batch
+                input_ids, target_ids, loss_mask, category_ids, attention_mask = micro_batch
 
-                model_output = self.model(input_ids)
+                model_output = self.model(input_ids, attention_mask=attention_mask)
                 loss = F.cross_entropy(model_output.logits[loss_mask], target_ids[loss_mask])
                 loss = loss / self.gradient_accumulation_steps
 

@@ -50,7 +50,11 @@ class ComposerBase(ABC):
             for i in range(len(line_category_ids)):
                 line_category_ids[i] += offset
 
-        return self.path_comment_template.format(**datapoint.completion_file)
+        completion = template_with_inserted_path.format(**datapoint.completion_file)
+        if not completion.endswith('\n'):
+            completion += '\n'  # instead of EOS token
+
+        return completion
 
     def compose(self, datapoint: dict[str, Any]) -> ComposedDatapoint:
         datapoint = Datapoint(**datapoint)

@@ -2,3 +2,4 @@ max_seq_len: 4096
 context_tokens: 2560
 loss_ratio: 0.3125
 num_chars_per_token: 6
+padding: False

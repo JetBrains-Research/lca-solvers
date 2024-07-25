@@ -12,4 +12,5 @@ class LMPreprocessorConfig(ConfigBase):
     context_tokens: int | float
     loss_ratio: float
     num_chars_per_token: int
-    verbose: int = 1
+    padding: bool
+    verbose: bool = True
