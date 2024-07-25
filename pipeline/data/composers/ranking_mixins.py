@@ -41,3 +41,19 @@ class NegativePathDistance(RankerMixin):
             -self._path_distance(chunk.metadata['filename'], datapoint.completion_file['filename'])
             for chunk in chunks
         ]
+
+
+class InverseGroupingPathDistance(NegativePathDistance):
+    def __init__(self, ordered_groups: list[list[str]]) -> None:
+        self.group_weights = {
+            extension: weight
+            for weight, group in enumerate(ordered_groups)
+            for extension in group
+        }
+
+    def rank(self, chunks: Sequence[Chunk], datapoint: Datapoint) -> Sequence[int | float]:
+        return [
+            self.group_weights['.' + chunk.metadata['filename'].split('.')[-1]] +
+            1 / (2 + self._path_distance(chunk.metadata['filename'], datapoint.completion_file['filename']))
+            for chunk in chunks
+        ]

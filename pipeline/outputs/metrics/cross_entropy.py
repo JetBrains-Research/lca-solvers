@@ -36,7 +36,7 @@ class CrossEntropy(MetricBase):
             self.normalization = 1
 
         loss_update = loss_update.item()
-        num_tokens_update = loss_mask.count_nonzero().item()
+        num_tokens_update = loss_mask.sum().item()
 
         # loss correction w.r.t. number of masked tokens (for unbalanced batches)
         if self.num_tokens is None:

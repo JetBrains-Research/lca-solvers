@@ -1,3 +1,4 @@
+# see PathDistanceComposer in pipeline/data/composers/composers.py
 pre_context_prompt: "# {}\n"
 chunks_sep: "\n\n"
 post_context_prompt: "\n\n"

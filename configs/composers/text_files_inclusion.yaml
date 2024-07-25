@@ -1,5 +1,6 @@
+# see InclusiveFileExtensionPathDistanceComposer in pipeline/data/composers/composers.py
 pre_context_prompt: "# {}\n"
 chunks_sep: "\n\n"
 post_context_prompt: "\n\n"
 path_comment_template: "# {filename}\n{content}"
-whitelist: ['.md', '.txt', '.rst', 'sh', 'yaml', 'yml', 'json']  # TODO
+whitelist: ['.md', '.txt', '.rst']

@@ -22,3 +22,8 @@ class InclusiveFileComposerConfig(ComposerConfig):
 @dataclass
 class ExclusiveFileComposerConfig(ComposerConfig):
     blacklist: list[str]
+
+
+@dataclass
+class GroupingPathDistanceComposerConfig(ComposerConfig):
+    ordered_groups: list[list[str]]

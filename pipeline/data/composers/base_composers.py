@@ -97,6 +97,11 @@ class GrainedComposer(ComposerBase, ChunkerMixin, FilterMixin, RankerMixin, Harv
         chunks = self.chunk(datapoint)
         chunks = self.filter(chunks, datapoint)
         ranks = self.rank(chunks, datapoint)
+
+        for rank, chunk in sorted(zip(ranks, chunks), key=lambda x: x[0]):
+            print(chunk.metadata['filename'], rank)
+
         chunks = [chunk for _, chunk in sorted(zip(ranks, chunks), key=lambda x: x[0])]
+
         context = self.harvest(chunks, datapoint)
         return context
