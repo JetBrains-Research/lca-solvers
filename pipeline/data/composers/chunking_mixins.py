@@ -17,7 +17,7 @@ class ChunkerMixin:
         return Chunk(content=''),
 
 
-class FileGrainedChunker:
+class FileGrainedChunker(ChunkerMixin):
     @staticmethod
     def chunk(datapoint: Datapoint) -> Sequence[Chunk]:
         return [
@@ -26,4 +26,17 @@ class FileGrainedChunker:
             for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
             # TODO: remove temporary hardcoded solution for data leakage
             if fn != 'tinygrad/llops/ops_llvm.py'
+        ]
+
+
+class LineGrainedChunker(ChunkerMixin):
+    @staticmethod
+    def chunk(datapoint: Datapoint) -> Sequence[Chunk]:
+        return [
+            Chunk(content=line, metadata=defaultdict(str, filename=fn))
+            # TODO: .values()
+            for fn, cnt in zip(datapoint.repo_snapshot['filename'], datapoint.repo_snapshot['content'])
+            # TODO: remove temporary hardcoded solution for data leakage
+            if fn != 'tinygrad/llops/ops_llvm.py'
+            for line in cnt.split('\n')
         ]

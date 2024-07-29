@@ -1,13 +1,20 @@
 from pipeline.data.composers.base_composers import GrainedComposer
-from pipeline.data.composers.chunking_mixins import FileGrainedChunker
+from pipeline.data.composers.chunking_mixins import (
+    FileGrainedChunker,
+    LineGrainedChunker, Chunk,
+)
 from pipeline.data.composers.filtering_mixins import (
     InclusiveFileExtensionFilter,
     ExclusiveFileExtensionFilter,
+    PartialMemoryFilter,
 )
 from pipeline.data.composers.ranking_mixins import (
     NegativePathDistance,
     InverseGroupingPathDistance,
 )
+
+from collections import defaultdict
+from typing import Sequence
 
 
 class PathDistanceComposer(FileGrainedChunker, NegativePathDistance, GrainedComposer):
@@ -35,3 +42,21 @@ class GroupingPathDistanceComposer(
         InclusiveFileExtensionFilter.__init__(self, whitelist)
         InverseGroupingPathDistance.__init__(self, ordered_groups)
         GrainedComposer.__init__(self, *args, **kwargs)
+
+
+class PartialMemoryPathDistanceComposer(
+    LineGrainedChunker, PartialMemoryFilter, NegativePathDistance, GrainedComposer):
+    def __init__(self, dropout: float, random_seed: int | None, *args, **kwargs) -> None:
+        PartialMemoryFilter.__init__(self, dropout, random_seed)
+        GrainedComposer.__init__(self, *args, **kwargs)
+
+    # shortcut for significant speed improvement; alternative is LinesHarvester
+    def filter(self, *args, **kwargs) -> Sequence[Chunk]:
+        files = defaultdict(list)
+        for line in super().filter(*args, **kwargs):
+            files[line.metadata['filename']].append(line.content)
+
+        return [
+            Chunk(content='\n'.join(cnt), metadata=defaultdict(str, filename=fn))
+            for fn, cnt in files.items()
+        ]

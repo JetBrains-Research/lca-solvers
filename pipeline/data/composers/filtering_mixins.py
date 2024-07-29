@@ -1,6 +1,7 @@
 from pipeline.data.composers.chunking_mixins import Chunk
 from pipeline.data.datapoint import Datapoint
 
+import random
 from typing import Sequence
 
 
@@ -24,3 +25,15 @@ class ExclusiveFileExtensionFilter(FilterMixin):
 
     def filter(self, chunks: Sequence[Chunk], _datapoint: Datapoint) -> Sequence[Chunk]:
         return [chunk for chunk in chunks if not chunk.metadata['filename'].endswith(self.blacklist)]
+
+
+class PartialMemoryFilter(FilterMixin):
+    def __init__(self, dropout: float, random_seed: int | None) -> None:
+        if not 0 <= dropout <= 1:
+            raise ValueError('dropout must be selected from the interval [0, 1]. '
+                             f'Got {dropout} instead.')
+        self.dropout = dropout
+        self.generator = random.Random(random_seed)
+
+    def filter(self, chunks: Sequence[Chunk], _datapoint: Datapoint) -> Sequence[Chunk]:
+        return [chunk for chunk in chunks if self.generator.random() >= self.dropout]

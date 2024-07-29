@@ -27,6 +27,7 @@ class LMPreprocessor(PreprocessorBase):
 
         if padding:
             tokenizer.deprecation_warnings['Asking-to-pad-a-fast-tokenizer'] = True
+        tokenizer.deprecation_warnings['sequence-length-is-longer-than-the-specified-maximum'] = True
 
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len

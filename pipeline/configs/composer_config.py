@@ -27,3 +27,9 @@ class ExclusiveFileComposerConfig(ComposerConfig):
 @dataclass
 class GroupingPathDistanceComposerConfig(ComposerConfig):
     ordered_groups: list[list[str]]
+
+
+@dataclass
+class PartialMemoryPathDistanceComposerConfig(ComposerConfig):
+    dropout: float
+    random_seed: int | None
