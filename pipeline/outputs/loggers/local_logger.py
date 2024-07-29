@@ -85,7 +85,7 @@ class LocalLogger(LoggerBase):
 
         if stderr_file == stdout_file:
             stderr_handler = stdout_handler
-        else:
+        else:  # TODO: fix
             stderr_handler = JsonHandler(stderr_file)
             stderr_handler.setLevel(logging.WARNING)
             stderr_handler.setFormatter(formatter)
@@ -98,8 +98,11 @@ class LocalLogger(LoggerBase):
         sys.excepthook = self.exception_handler
 
         # redirect all HF logs (at least datasets and transformers)
-        datasets.utils.logging.get_logger().handlers = self.logger.handlers
-        transformers.utils.logging.get_logger().handlers = self.logger.handlers
+        datasets_logger = datasets.utils.logging.get_logger()
+        transformers_logger = transformers.utils.logging.get_logger()
+
+        datasets_logger.handlers = self.logger.handlers
+        transformers_logger.handlers = self.logger.handlers
 
     @staticmethod
     def write_metrics_to_csv(metrics: dict[MetricName, MetricValue], path: str) -> None:
@@ -114,7 +117,9 @@ class LocalLogger(LoggerBase):
             return metrics  # repeated iterations between checkpoints
 
         iter_num = {'iter_num': metrics['iteration_number']}
-        self.write_metrics_to_csv(iter_num | metrics['train_metrics'], self.train_csv)
+
+        if 'train_metrics' in metrics:
+            self.write_metrics_to_csv(iter_num | metrics['train_metrics'], self.train_csv)
         if 'valid_metrics' in metrics:
             self.write_metrics_to_csv(iter_num | metrics['valid_metrics'], self.valid_csv)
 

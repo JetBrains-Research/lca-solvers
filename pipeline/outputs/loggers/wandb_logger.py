@@ -25,9 +25,11 @@ class WandbLogger(LocalLogger):
         if metrics['iteration_number'] <= self.last_logged_iter:
             return super().log(metrics)  # repeated iterations between checkpoints
 
-        wandb_log = {'train': metrics['train_metrics']}
+        wandb_log = dict()
+        if 'train_metrics' in metrics:
+            wandb_log['train'] = metrics['train_metrics']
         if 'valid_metrics' in metrics:
             wandb_log['validation'] = metrics['valid_metrics']
-        wandb.log(wandb_log, step=metrics['iteration_number'])
 
+        wandb.log(wandb_log, step=metrics['iteration_number'])
         return super().log(metrics)

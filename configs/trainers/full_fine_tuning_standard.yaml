@@ -18,7 +18,7 @@ lr_decay_iters: 600
 min_lr: 1.0e-7
 
 # Metrics
-train_metrics: [cross_entropy, detached_cross_entropy]
+train_metrics: [cross_entropy, detached_cross_entropy, learning_rate]
 train_ema_alpha: 0.01
 valid_metrics: [cross_entropy, detached_cross_entropy]
 valid_ema_alpha: null

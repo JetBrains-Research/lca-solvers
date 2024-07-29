@@ -25,6 +25,9 @@ class LMPreprocessor(PreprocessorBase):
             raise ValueError('loss_ratio must be selected from the interval (0, 1]. '
                              f'Got {loss_ratio} instead.')
 
+        if padding:
+            tokenizer.deprecation_warnings['Asking-to-pad-a-fast-tokenizer'] = True
+
         self.tokenizer = tokenizer
         self.max_seq_len = max_seq_len
 
@@ -58,7 +61,7 @@ class LMPreprocessor(PreprocessorBase):
             return_attention_mask=False,
         )
 
-        for tokenized_prompt, prompt in zip(tokenized_prompts, prompts):
+        for tokenized_prompt, prompt in zip(tokenized_prompts.input_ids, prompts):
             overflow_chars = len(prompt) > char_trunc_upper_bound
             underflow_tokens = len(tokenized_prompt) < self.max_seq_len
 
@@ -104,7 +107,7 @@ class LMPreprocessor(PreprocessorBase):
             return_attention_mask=False,
         )
 
-        for tokenized_ctx, ctx in zip(tokenized_contexts, contexts):
+        for tokenized_ctx, ctx in zip(tokenized_contexts.input_ids, contexts):
             overflow_chars = len(ctx) > char_trunc_upper_bound
             underflow_tokens = len(tokenized_ctx) < self.max_seq_len
 
@@ -191,12 +194,17 @@ class LMPreprocessor(PreprocessorBase):
             context = context[-context_len:]
             completion = completion[:completion_len]
 
-            tokenized_batch.append(prompt + context + completion)
+            tokenized_completions.offset_mapping[sample_idx] = \
+                tokenized_completions.offset_mapping[sample_idx][:completion_len]
             tokenized_completions.length[sample_idx] = len(completion)
+
+            tokenized_batch.append(prompt + context + completion)
 
         self.tokenizer.padding_side = 'right'
         padded_batch = self.tokenizer.pad(
             encoded_inputs={'input_ids': tokenized_batch},
+            padding='max_length',  # TODO: just longest?
+            max_length=self.max_seq_len + 1,
             return_attention_mask=True,
             return_tensors='pt')
         input_attn_mask = padded_batch.attention_mask[:, :-1]

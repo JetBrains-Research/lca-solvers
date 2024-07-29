@@ -57,6 +57,7 @@ class CrossEntropy(MetricBase):
 
 class DetachedCrossEntropy(CrossEntropy):
     def micro_batch_update(self, **kwargs) -> None:
-        kwargs['loss_mask'] = ~kwargs['loss_mask']
+        target_attn_mask = (kwargs['target_ids'] != kwargs['tokenizer'].pad_token_id)
+        kwargs['loss_mask'] = ~kwargs['loss_mask'] & target_attn_mask
         kwargs['loss'] = None
         return super().micro_batch_update(**kwargs)

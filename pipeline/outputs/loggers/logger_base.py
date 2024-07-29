@@ -11,7 +11,7 @@ Message = str | int | float | dict[str, JsonAllowedTypes]
 
 class Log(TypedDict):  # TODO: replace with dataclass
     iteration_number: int
-    train_metrics: dict[MetricName, MetricValue]
+    train_metrics: NotRequired[dict[MetricName, MetricValue]]
     valid_metrics: NotRequired[dict[MetricName, MetricValue]]
 
 

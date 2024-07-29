@@ -103,7 +103,7 @@ class CheckpointManager:
     def get_iteration_number(self) -> int:
         checkpoint_dir = self.get_checkpoint_directory()
         if checkpoint_dir is not None:
-            return self._extract_iteration_number(checkpoint_dir) + 1
+            return self._extract_iteration_number(checkpoint_dir)
         else:
             return 0
 
@@ -169,13 +169,13 @@ class TopKCheckpointManager(CheckpointManager):
         super().__init__(*args, **kwargs)
         self.max_checkpoints_num = max_checkpoints_num
 
-    def save_checkpoint(self, checkpoint: Checkpoint) -> None:
+    def save_checkpoint(self, checkpoint: Checkpoint) -> None:  # TODO: optimize
+        super().save_checkpoint(checkpoint)
+
         checkpoints = next(os.walk(self.directory))[1]
         checkpoints = sorted(checkpoints, key=self.get_checkpoint_score)
 
-        while len(checkpoints) >= self.max_checkpoints_num:
+        while len(checkpoints) > self.max_checkpoints_num:
             checkpoint2del = checkpoints.pop()
             checkpoint2del = os.path.join(self.directory, checkpoint2del)
             shutil.rmtree(checkpoint2del)
-
-        super().save_checkpoint(checkpoint)

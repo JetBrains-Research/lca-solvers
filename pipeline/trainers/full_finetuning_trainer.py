@@ -175,7 +175,7 @@ class FullFineTuningTrainer:
         return optimizer
 
     @torch.inference_mode
-    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:  # TODO: zero step
+    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
         training = self.model.training
         self.model.eval()
 
@@ -195,6 +195,7 @@ class FullFineTuningTrainer:
 
             locals_copy = locals().copy()
             locals_copy.pop('self')
+            locals_copy['tokenizer'] = self.tokenizer
             [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
             del locals_copy
 
@@ -223,12 +224,16 @@ class FullFineTuningTrainer:
             disable=not verbose,
         )
 
+        if self.start_iter == 0 and self.valid_dl is not None:
+            log = Log(iteration_number=0, valid_metrics=self.validate(verbose))
+            self.logger.log(log)
+
         for iter_num in pbar_iter:
             pbar_accumulation.reset()
 
-            lr = self.get_lr(iter_num)
+            learning_rate = self.get_lr(iter_num)
             for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
+                param_group['lr'] = learning_rate
 
             for _ in range(self.gradient_accumulation_steps):
                 micro_batch = [t.to(self.model.device) for t in next(train_iter).values()]
@@ -242,6 +247,7 @@ class FullFineTuningTrainer:
 
                 locals_copy = locals().copy()
                 locals_copy.pop('self')
+                locals_copy['tokenizer'] = self.tokenizer
                 [metric.micro_batch_update(**locals_copy) for metric in self.train_metrics.values()]
                 del locals_copy
 
@@ -256,7 +262,7 @@ class FullFineTuningTrainer:
             self.optimizer.zero_grad(set_to_none=True)
 
             log = Log(
-                iteration_number=iter_num,
+                iteration_number=iter_num + 1,
                 train_metrics={name: metric.batch_commit() for name, metric in self.train_metrics.items()},
             )
             if (iter_num + 1) % self.valid_freq == 0:
