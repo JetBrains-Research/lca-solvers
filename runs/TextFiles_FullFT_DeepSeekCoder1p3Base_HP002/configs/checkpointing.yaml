@@ -1,0 +1,3 @@
+init_from: resume
+main_metric: cross_entropy
+max_checkpoints_num: 3
