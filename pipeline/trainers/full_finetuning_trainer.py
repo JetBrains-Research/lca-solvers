@@ -74,6 +74,7 @@ class FullFineTuningTrainer:
         self.start_iter = checkpointer.get_iteration_number()
         self.max_iters = max_iters
         self.gradient_accumulation_steps = gradient_accumulation_steps
+        self.batch_size = gradient_accumulation_steps * micro_batch_size
 
         # environment
         self.is_on_cuda = (model.device.type == 'cuda')
@@ -109,10 +110,9 @@ class FullFineTuningTrainer:
             raise ValueError('The valid_ds, valid_freq and valid_metrics arguments do not match each other.')
 
         # training dataset
-        batch_size = gradient_accumulation_steps * micro_batch_size
         sampler = FusedSampler(
-            start_sample_idx=(batch_size * self.start_iter),
-            end_sample_idx=(batch_size * max_iters),
+            start_sample_idx=(self.batch_size * self.start_iter),
+            end_sample_idx=(self.batch_size * max_iters),
             dataset_length=len(train_ds),
         ) if shuffle else None
 
@@ -194,8 +194,7 @@ class FullFineTuningTrainer:
             model_output = self.model(input_ids, attention_mask=attention_mask)
 
             locals_copy = locals().copy()
-            locals_copy.pop('self')
-            locals_copy['tokenizer'] = self.tokenizer
+            locals_copy['trainer'] = locals_copy.pop('self')
             [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
             del locals_copy
 
@@ -241,13 +240,14 @@ class FullFineTuningTrainer:
 
                 model_output = self.model(input_ids, attention_mask=attention_mask)
                 loss = F.cross_entropy(model_output.logits[loss_mask], target_ids[loss_mask])
+                # not accurate if drop_last=False and micro_batch_size != 1
+                # see also PreprocessorBase.get_loss_mask comment in pipeline/data/preprocessing/preprocessor_base.py
                 loss = loss / self.gradient_accumulation_steps
 
                 self.grad_scaler.scale(loss).backward()
 
                 locals_copy = locals().copy()
-                locals_copy.pop('self')
-                locals_copy['tokenizer'] = self.tokenizer
+                locals_copy['trainer'] = locals_copy.pop('self')
                 [metric.micro_batch_update(**locals_copy) for metric in self.train_metrics.values()]
                 del locals_copy
 

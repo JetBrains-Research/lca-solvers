@@ -31,7 +31,7 @@ class FullFineTuningTrainerConfig(ConfigBase):
 
     # Metrics (see METRICS_REGISTRY in pipeline/outputs/metrics/metrics_registry.py)
     train_metrics: list[MetricName]
-    train_ema_alpha: float  # (see ema_factory in pipeline/outputs/metrics/statistics.py)
+    train_ema_alpha: float  # (see ema_factory in pipeline/outputs/metrics/statistic_base.py)
     valid_metrics: list[MetricName]  # empty list means no validation at all
     valid_ema_alpha: float | None  # if None, will be calculated as 1 - (1 - train_ema_alpha) ** valid_freq
 

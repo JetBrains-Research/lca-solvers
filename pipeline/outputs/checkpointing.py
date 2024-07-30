@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pipeline.outputs.loggers.logger_base import Log
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, OptimizationMode, MetricBase
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
@@ -169,7 +167,7 @@ class TopKCheckpointManager(CheckpointManager):
         super().__init__(*args, **kwargs)
         self.max_checkpoints_num = max_checkpoints_num
 
-    def save_checkpoint(self, checkpoint: Checkpoint) -> None:  # TODO: optimize
+    def save_checkpoint(self, checkpoint: Checkpoint) -> None:
         super().save_checkpoint(checkpoint)
 
         checkpoints = next(os.walk(self.directory))[1]

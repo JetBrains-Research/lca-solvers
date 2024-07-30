@@ -1,4 +1,4 @@
-# TODO: grad norm, number of (masked) tokens, time, speed [tok/sec]?
+# TODO: grad norm, number of (masked) tokens, speed [tok/sec]?
 from abc import ABC, abstractmethod
 from typing import Type
 

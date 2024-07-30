@@ -204,7 +204,7 @@ class LMPreprocessor(PreprocessorBase):
         self.tokenizer.padding_side = 'right'
         padded_batch = self.tokenizer.pad(
             encoded_inputs={'input_ids': tokenized_batch},
-            padding='max_length',  # TODO: just longest?
+            padding='max_length',
             max_length=self.max_seq_len + 1,
             return_attention_mask=True,
             return_tensors='pt')

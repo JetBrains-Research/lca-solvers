@@ -35,14 +35,14 @@ class CrossEntropy(MetricBase):
             loss_update = F.cross_entropy(model_output.logits[loss_mask], target_ids[loss_mask])
             self.normalization = 1
 
-        loss_update = loss_update.item()
+        loss_update = torch.nan_to_num(loss_update).item()
         num_tokens_update = loss_mask.sum().item()
 
         # loss correction w.r.t. number of masked tokens (for unbalanced batches)
         if self.num_tokens is None:
             self.mean_loss += loss_update
             self.num_tokens = 0
-        else:
+        elif self.num_tokens != 0:
             tokens_ratio = num_tokens_update / self.num_tokens
             self.mean_loss += tokens_ratio * loss_update
             self.mean_loss /= tokens_ratio + 1
@@ -50,14 +50,17 @@ class CrossEntropy(MetricBase):
         self.num_tokens += num_tokens_update
 
     def batch_commit(self) -> MetricValue:
-        batch_metric = self.mean_loss * self.normalization
+        if self.num_tokens == 0:
+            batch_metric = float('nan')
+        else:
+            batch_metric = self.mean_loss * self.normalization
         self.reset()
         return batch_metric
 
 
 class DetachedCrossEntropy(CrossEntropy):
     def micro_batch_update(self, **kwargs) -> None:
-        target_attn_mask = (kwargs['target_ids'] != kwargs['tokenizer'].pad_token_id)
+        target_attn_mask = (kwargs['target_ids'] != kwargs['trainer'].tokenizer.pad_token_id)
         kwargs['loss_mask'] = ~kwargs['loss_mask'] & target_attn_mask
         kwargs['loss'] = None
         return super().micro_batch_update(**kwargs)

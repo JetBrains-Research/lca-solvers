@@ -1,3 +1,7 @@
+from typing import Literal
+
+CategoryType = Literal['commited', 'common', 'infile', 'inproject', 'non_informative', 'random', 'other']
+
 ID2CATEGORY = [
     'commited',
     'common',
