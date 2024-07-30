@@ -1,0 +1,34 @@
+# Iteration parameters
+max_iters: 600
+valid_freq: 25
+checkpointing_freq: 25
+gradient_accumulation_steps: 64
+micro_batch_size: 1
+
+# AdamW optimizer
+learning_rate: 3.5e-5
+beta_1: 0.9
+beta_2: 0.999
+weight_decay: 0.01
+max_grad_norm: 2
+
+# Cosine lr scheduler with warmup
+warmup_iters: 50
+lr_decay_iters: 600
+min_lr: 5.0e-8
+
+# Metrics
+train_metrics: [cross_entropy, detached_cross_entropy, learning_rate]
+train_ema_alpha: 0.01
+valid_metrics: [cross_entropy, detached_cross_entropy]
+valid_ema_alpha: null
+
+# DataLoader
+shuffle: True
+drop_last: False
+num_workers: 8
+prefetch_factor: 8
+random_seed: 1337
+
+# Floating point
+fp32_matmul_precision: high
