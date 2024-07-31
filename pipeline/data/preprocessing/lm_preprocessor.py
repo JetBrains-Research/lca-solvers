@@ -124,6 +124,22 @@ class LMPreprocessor(PreprocessorBase):
 
         return tokenized_contexts
 
+    def calc_lens(self,
+                  prompt: torch.Tensor,
+                  context: torch.Tensor,
+                  completion: torch.Tensor,
+                  ) -> tuple[int, int, int]:
+        if len(context) >= self.context_tokens:
+            prompt_len = min(len(prompt), self.max_seq_len - self.context_tokens)
+            completion_len = min(len(completion), self.max_seq_len - self.context_tokens - prompt_len)
+            context_len = self.max_seq_len - prompt_len - completion_len
+        else:
+            context_len = len(context)
+            prompt_len = min(len(prompt), self.max_seq_len - context_len)
+            completion_len = self.max_seq_len - prompt_len - context_len
+
+        return prompt_len, context_len, completion_len
+
     def get_loss_mask(self,
                       _tokenized_completions: BatchEncoding,
                       target_attn_mask: torch.Tensor,
@@ -182,14 +198,7 @@ class LMPreprocessor(PreprocessorBase):
             context = tokenized_contexts.input_ids[sample_idx]
             completion = tokenized_completions.input_ids[sample_idx]
 
-            if len(context) >= self.context_tokens:
-                prompt_len = min(len(prompt), self.max_seq_len - self.context_tokens)
-                completion_len = min(len(completion), self.max_seq_len - self.context_tokens - prompt_len)
-                context_len = self.max_seq_len - prompt_len - completion_len
-            else:
-                context_len = len(context)
-                prompt_len = min(len(prompt), self.max_seq_len - context_len)
-                completion_len = self.max_seq_len - prompt_len - context_len
+            prompt_len, context_len, completion_len = self.calc_lens(prompt, context, completion)
 
             prompt = [self.tokenizer.bos_token_id] + prompt[-prompt_len:]
             context = context[-context_len:]
@@ -204,8 +213,7 @@ class LMPreprocessor(PreprocessorBase):
         self.tokenizer.padding_side = 'right'
         padded_batch = self.tokenizer.pad(
             encoded_inputs={'input_ids': tokenized_batch},
-            padding='max_length',
-            max_length=self.max_seq_len + 1,
+            padding='longest',
             return_attention_mask=True,
             return_tensors='pt')
         input_attn_mask = padded_batch.attention_mask[:, :-1]

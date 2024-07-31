@@ -7,14 +7,12 @@ from pipeline.data.composers.filtering_mixins import (
     InclusiveFileExtensionFilter,
     ExclusiveFileExtensionFilter,
     PartialMemoryFilter,
+    ChunkLengthFilter,
 )
 from pipeline.data.composers.ranking_mixins import (
     NegativePathDistance,
     InverseGroupingPathDistance,
 )
-
-from collections import defaultdict
-from typing import Sequence
 
 
 class PathDistanceComposer(FileGrainedChunker, NegativePathDistance, GrainedComposer):
@@ -50,13 +48,9 @@ class PartialMemoryPathDistanceComposer(
         PartialMemoryFilter.__init__(self, dropout, random_seed)
         GrainedComposer.__init__(self, *args, **kwargs)
 
-    # shortcut for significant speed improvement; alternative is LinesHarvester
-    def filter(self, *args, **kwargs) -> Sequence[Chunk]:
-        files = defaultdict(list)
-        for line in super().filter(*args, **kwargs):
-            files[line.metadata['filename']].append(line.content)
 
-        return [
-            Chunk(content='\n'.join(cnt), metadata=defaultdict(str, filename=fn))
-            for fn, cnt in files.items()
-        ]
+class StripPathDistanceComposer(
+    LineGrainedChunker, ChunkLengthFilter, NegativePathDistance, GrainedComposer):
+    def __init__(self, min_len: int, max_len: int, *args, **kwargs) -> None:
+        ChunkLengthFilter.__init__(self, min_len, max_len)
+        GrainedComposer.__init__(self, *args, **kwargs)

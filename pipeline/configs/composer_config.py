@@ -33,3 +33,9 @@ class GroupingPathDistanceComposerConfig(ComposerConfig):
 class PartialMemoryPathDistanceComposerConfig(ComposerConfig):
     dropout: float
     random_seed: int | None
+
+
+@dataclass
+class StripPathDistanceComposerConfig(ComposerConfig):
+    min_len: int
+    max_len: int | float  # e.g. !!float .inf

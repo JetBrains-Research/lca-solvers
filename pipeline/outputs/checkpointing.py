@@ -132,6 +132,7 @@ class CheckpointManager:
             checkpoint_dir = os.path.join(self.directory, checkpoint_dir)
             metrics_states = self.load_metrics(checkpoint_dir)[group]
 
+        # TODO: fix resuming
         for name in metrics:
             if name.startswith('ema_'):
                 metrics_dict[name] = METRICS_REGISTRY[name](ema_alpha, metrics_states.get(name))
