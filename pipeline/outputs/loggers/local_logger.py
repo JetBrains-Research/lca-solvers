@@ -85,7 +85,7 @@ class LocalLogger(LoggerBase):
 
         if stderr_file == stdout_file:
             stderr_handler = stdout_handler
-        else:  # TODO: fix
+        else:  # TODO: large number of processes + high call frequency breaks the json formatting structure (bug)
             stderr_handler = JsonHandler(stderr_file)
             stderr_handler.setLevel(logging.WARNING)
             stderr_handler.setFormatter(formatter)

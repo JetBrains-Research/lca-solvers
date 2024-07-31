@@ -8,6 +8,9 @@ StatisticValue = int | float
 
 
 class StatisticBase(ABC):
+    def reinit(self, prev_value: StatisticValue | None) -> None:
+        pass  # default behavior
+
     @abstractmethod
     @torch.inference_mode
     def micro_batch_update(self, **kwargs) -> None:
@@ -20,9 +23,12 @@ class StatisticBase(ABC):
 
 def ema_factory(statistic_cls: Type[StatisticBase]) -> Type[StatisticBase]:
     class EMAStatistic(statistic_cls, ABC):
-        def __init__(self, ema_alpha: float, ema_state: float | None = None) -> None:
+        def __init__(self, ema_alpha: float) -> None:
             super().__init__()
             self.ema_alpha = ema_alpha
+            self.ema_state = None
+
+        def reinit(self, ema_state: float | None) -> None:
             self.ema_state = ema_state
 
         def batch_commit(self) -> StatisticValue:
