@@ -1,4 +1,5 @@
-from pipeline.outputs.checkpointing import Checkpoint, CheckpointManager
+from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
+from pipeline.outputs.checkpointers.data_structures import Checkpoint
 from pipeline.outputs.loggers.logger_base import Log, LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
 from pipeline.trainers.utils.fused_sampler import FusedSampler
@@ -188,10 +189,17 @@ class FullFineTuningTrainer:
         )
 
         for micro_batch in valid_iter:
-            micro_batch = [t.to(self.model.device) for t in micro_batch.values()]
-            input_ids, target_ids, loss_mask, category_ids, attention_mask = micro_batch
+            (input_ids, target_ids,
+             loss_mask, completion_mask, category_ids,
+             input_attn_mask, target_attn_mask,
+             ) = (t.to(self.model.device) for t in micro_batch.values())
 
-            model_output = self.model(input_ids, attention_mask=attention_mask)
+            model_output = self.model(input_ids, attention_mask=input_attn_mask)
+            loss_per_token = F.cross_entropy(
+                input=model_output.logits.flatten(0, 1),
+                target=target_ids.flatten(0, 1),
+                reduction='none',
+            ).view_as(target_ids)
 
             locals_copy = locals().copy()
             locals_copy['trainer'] = locals_copy.pop('self')
@@ -235,14 +243,20 @@ class FullFineTuningTrainer:
                 param_group['lr'] = learning_rate
 
             for _ in range(self.gradient_accumulation_steps):
-                micro_batch = [t.to(self.model.device) for t in next(train_iter).values()]
-                input_ids, target_ids, loss_mask, category_ids, attention_mask = micro_batch
+                (input_ids, target_ids,
+                 loss_mask, completion_mask, category_ids,
+                 input_attn_mask, target_attn_mask,
+                 ) = (t.to(self.model.device) for t in next(train_iter).values())
 
-                model_output = self.model(input_ids, attention_mask=attention_mask)
-                loss = F.cross_entropy(model_output.logits[loss_mask], target_ids[loss_mask])
+                model_output = self.model(input_ids, attention_mask=input_attn_mask)
+                loss_per_token = F.cross_entropy(
+                    input=model_output.logits.flatten(0, 1),
+                    target=target_ids.flatten(0, 1),
+                    reduction='none',
+                ).view_as(target_ids)
                 # not accurate if drop_last=False and micro_batch_size != 1
-                # see also PreprocessorBase.get_loss_mask comment in pipeline/data/preprocessing/preprocessor_base.py
-                loss = loss / self.gradient_accumulation_steps
+                # see also PreprocessorBase.get_loss_mask comment in pipeline/data/preprocessors/preprocessor_base.py
+                loss = loss_per_token[loss_mask].mean() / self.gradient_accumulation_steps
 
                 self.grad_scaler.scale(loss).backward()
 

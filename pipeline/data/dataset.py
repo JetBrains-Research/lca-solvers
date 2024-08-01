@@ -1,5 +1,5 @@
 from pipeline.data.composers.base_composers import ComposerBase
-from pipeline.data.preprocessing.preprocessor_base import PreprocessorBase
+from pipeline.data.preprocessors.preprocessor_base import PreprocessorBase
 
 import random
 from collections import defaultdict

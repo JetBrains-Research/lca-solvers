@@ -1,12 +1,22 @@
-from pipeline.outputs.metrics.cross_entropy import CrossEntropy, DetachedCrossEntropy
-from pipeline.outputs.metrics.metric_base import categorized_metric_factory
+from pipeline.outputs.metrics.cross_entropy import CrossEntropy
+from pipeline.outputs.metrics.metric_base import (
+    loss_based_metric_factory,
+    detached_metric_factory,
+    completion_metric_factory,
+    context_metric_factory,
+    full_metric_factory,
+    categorized_metric_factory,
+)
 from pipeline.outputs.metrics.statistic_base import ema_factory, lazy_statistic_factory
 from pipeline.outputs.metrics.counters import EpochCounter
 
 METRICS_REGISTRY = {
-    'cross_entropy': CrossEntropy,
+    'cross_entropy': loss_based_metric_factory(CrossEntropy),
 
-    'detached_cross_entropy': DetachedCrossEntropy,
+    'detached_cross_entropy': detached_metric_factory(CrossEntropy),
+    'completion_cross_entropy': completion_metric_factory(CrossEntropy),
+    'context_cross_entropy': context_metric_factory(CrossEntropy),
+    'full_cross_entropy': full_metric_factory(CrossEntropy),
     'commited_cross_entropy': categorized_metric_factory(CrossEntropy, 'commited'),
     'common_cross_entropy': categorized_metric_factory(CrossEntropy, 'common'),
     'infile_cross_entropy': categorized_metric_factory(CrossEntropy, 'infile'),

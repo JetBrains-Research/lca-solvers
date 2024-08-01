@@ -1,6 +1,6 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import CHECKPOINTS_DIR, CHECKPOINTING_YAML
-from pipeline.outputs.checkpointing import LoadingMode
+from pipeline.environment.run_directory import CHECKPOINTS_DIR, CHECKPOINTER_YAML
+from pipeline.outputs.checkpointers.data_structures import LoadingMode
 from pipeline.outputs.metrics.metric_base import MetricName
 
 from dataclasses import dataclass
@@ -9,7 +9,7 @@ from typing import Callable
 
 @dataclass
 class CheckpointManagerConfig(ConfigBase):
-    _default_path = CHECKPOINTING_YAML
+    _default_path = CHECKPOINTER_YAML
 
     init_from: LoadingMode | str
     main_metric: MetricName

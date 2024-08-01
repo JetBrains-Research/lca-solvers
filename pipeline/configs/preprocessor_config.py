@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class LMPreprocessorConfig(ConfigBase):
+class PreprocessorConfig(ConfigBase):
     _default_path = PREPROCESSOR_YAML
 
     max_seq_len: int

@@ -1,33 +1,18 @@
+from pipeline.outputs.checkpointers.data_structures import LoadingMode, Checkpoint
 from pipeline.outputs.loggers.logger_base import Log
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, OptimizationMode, MetricBase
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 
 import json
 import os
-import shutil
 import warnings
-from dataclasses import dataclass
-from enum import Enum
+
 from typing import Callable, Literal
 
 import torch
-from transformers import PreTrainedModel
 
 
-class LoadingMode(str, Enum):
-    SCRATCH = 'scratch'
-    RESUME = 'resume'
-    BEST = 'best'
-
-
-@dataclass
-class Checkpoint:
-    metrics: Log
-    model: PreTrainedModel
-    optimizer_state: dict
-
-
-class CheckpointManager:
+class CheckpointManager:  # aka checkpointer
     def __init__(self,
                  init_from: LoadingMode | str,
                  main_metric: MetricName,
@@ -159,20 +144,3 @@ class CheckpointManager:
 
         with open(metrics_file, 'w') as stream:
             json.dump(checkpoint.metrics, stream, indent=4)
-
-
-class TopKCheckpointManager(CheckpointManager):
-    def __init__(self, max_checkpoints_num: int, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.max_checkpoints_num = max_checkpoints_num
-
-    def save_checkpoint(self, checkpoint: Checkpoint) -> None:
-        super().save_checkpoint(checkpoint)
-
-        checkpoints = next(os.walk(self.directory))[1]
-        checkpoints = sorted(checkpoints, key=self.get_checkpoint_score)
-
-        while len(checkpoints) > self.max_checkpoints_num:
-            checkpoint2del = checkpoints.pop()
-            checkpoint2del = os.path.join(self.directory, checkpoint2del)
-            shutil.rmtree(checkpoint2del)

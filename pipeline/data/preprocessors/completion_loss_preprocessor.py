@@ -1,7 +1,7 @@
 from pipeline.data.categories import CATEGORY2ID, UNDEFINED_CATEGORY_ID
 from pipeline.data.composed_datapoint import BatchComposedDatapoint
 from pipeline.data.datapoint import CompletionLines
-from pipeline.data.preprocessing.preprocessor_base import PreprocessedBatch, PreprocessorBase
+from pipeline.data.preprocessors.preprocessor_base import PreprocessedBatch, PreprocessorBase
 
 import math
 import re
@@ -11,7 +11,7 @@ import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 
-class LMPreprocessor(PreprocessorBase):
+class CompletionLossPreprocessor(PreprocessorBase):
     def __init__(self,
                  tokenizer: PreTrainedTokenizerBase,
                  max_seq_len: int,
@@ -140,17 +140,23 @@ class LMPreprocessor(PreprocessorBase):
 
         return prompt_len, context_len, completion_len
 
-    def get_loss_mask(self,
-                      _tokenized_completions: BatchEncoding,
-                      target_attn_mask: torch.Tensor,
-                      ) -> torch.Tensor:
+    @staticmethod
+    def _get_partial_completion_mask(tokenized_completions: BatchEncoding,
+                                     target_attn_mask: torch.Tensor,
+                                     ratio: float,
+                                     ) -> torch.Tensor:
         position_ids = torch.arange(target_attn_mask.shape[-1])
         num_informative_tokens = target_attn_mask.sum(dim=-1, keepdim=True)
-        num_loss_tokens = (self.loss_ratio * num_informative_tokens).ceil().long()
+        completions_len = tokenized_completions.length.unsqueeze(-1)
+        num_masked_tokens = (ratio * completions_len).ceil().long()
+        mask = (num_informative_tokens - num_masked_tokens <= position_ids)
+        return mask.logical_and(target_attn_mask)
 
-        loss_mask = (num_informative_tokens - num_loss_tokens <= position_ids)
-        loss_mask.logical_and_(target_attn_mask)
-        return loss_mask
+    def get_loss_mask(self, *args, **kwargs) -> torch.Tensor:
+        return self._get_partial_completion_mask(*args, **kwargs, ratio=self.loss_ratio)
+
+    def get_completion_mask(self, *args, **kwargs) -> torch.Tensor:
+        return self._get_partial_completion_mask(*args, **kwargs, ratio=1)
 
     @staticmethod
     def get_category_ids(tokenized_completions: BatchEncoding,
@@ -223,6 +229,8 @@ class LMPreprocessor(PreprocessorBase):
             input_ids=padded_batch.input_ids[:, :-1],
             target_ids=padded_batch.input_ids[:, 1:],
             loss_mask=self.get_loss_mask(tokenized_completions, target_attn_mask),
+            completion_mask=self.get_completion_mask(tokenized_completions, target_attn_mask),
             category_ids=self.get_category_ids(tokenized_completions, batch['completion_lines'], target_attn_mask),
-            attention_mask=input_attn_mask,
+            input_attn_mask=input_attn_mask,
+            target_attn_mask=target_attn_mask.bool(),
         )

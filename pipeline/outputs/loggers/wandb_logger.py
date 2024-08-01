@@ -1,7 +1,7 @@
 from pipeline.environment.run_directory import get_run_name
+from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.loggers.local_logger import LocalLogger
 from pipeline.outputs.loggers.logger_base import Log
-from pipeline.outputs.checkpointing import CheckpointManager
 
 import wandb
 

@@ -1,9 +1,9 @@
-from pipeline.data.preprocessing.lm_preprocessor import LMPreprocessor
+from pipeline.data.preprocessors.completion_loss_preprocessor import CompletionLossPreprocessor
 
 import torch
 
 
-class FileLevelPreprocessor(LMPreprocessor):
+class FileLevelPreprocessor(CompletionLossPreprocessor):
     def calc_lens(self,
                   prompt: torch.Tensor,
                   context: torch.Tensor,

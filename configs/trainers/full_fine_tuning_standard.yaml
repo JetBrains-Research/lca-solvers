@@ -21,6 +21,9 @@ min_lr: 1.0e-7
 train_metrics: [
   cross_entropy,
   detached_cross_entropy,
+  completion_cross_entropy,
+  context_cross_entropy,
+  full_cross_entropy,
   commited_cross_entropy,
   common_cross_entropy,
   infile_cross_entropy,
@@ -34,12 +37,16 @@ train_ema_alpha: 0.01
 valid_metrics: [
   cross_entropy,
   detached_cross_entropy,
+  completion_cross_entropy,
+  context_cross_entropy,
+  full_cross_entropy,
   commited_cross_entropy,
   common_cross_entropy,
   infile_cross_entropy,
   inproject_cross_entropy,
   non_informative_cross_entropy,
   random_cross_entropy,
+  epoch,
 ]
 valid_ema_alpha: null
 

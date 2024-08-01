@@ -9,9 +9,13 @@ import torch
 class PreprocessedBatch(TypedDict):
     input_ids: torch.Tensor
     target_ids: torch.Tensor
+
     loss_mask: torch.Tensor
+    completion_mask: torch.Tensor
     category_ids: torch.Tensor
-    attention_mask: torch.Tensor
+
+    input_attn_mask: torch.Tensor
+    target_attn_mask: torch.Tensor
 
 
 class PreprocessorBase(ABC):
@@ -23,6 +27,14 @@ class PreprocessorBase(ABC):
         the training loop should include corresponding gradient scaling.
         *or we just don't care :)
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_completion_mask(self, *args, **kwargs) -> torch.Tensor:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_category_ids(self, *args, **kwargs) -> torch.Tensor:
         raise NotImplementedError
 
     @abstractmethod

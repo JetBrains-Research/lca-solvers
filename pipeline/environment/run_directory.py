@@ -13,7 +13,7 @@ RUN_PY = 'run.py'
 join_path = partial(os.path.join, CONFIGS_DIR)
 
 # default destination configs
-CHECKPOINTING_YAML = join_path('checkpointing.yaml')
+CHECKPOINTER_YAML = join_path('checkpointer.yaml')
 COMPOSER_YAML = join_path('composer.yaml')
 DATASET_YAML = join_path('dataset.yaml')
 LOGGER_YAML = join_path('logger.yaml')
@@ -27,7 +27,7 @@ CONFIGS_SRC_DIR = 'configs'
 join_path = partial(os.path.join, CONFIGS_SRC_DIR)
 
 # default source directories
-CHECKPOINTING_SRC_DIR = join_path('checkpointing')
+CHECKPOINTERS_SRC_DIR = join_path('checkpointers')
 COMPOSERS_SRC_DIR = join_path('composers')
 DATASETS_SRC_DIR = join_path('datasets')
 LOGGERS_SRC_DIR = join_path('loggers')
@@ -37,7 +37,7 @@ SPLITS_SRC_DIR = join_path('splits')
 TRAINERS_SRC_DIR = join_path('trainers')
 
 # default source configs
-SRC_CHECKPOINTING_YAML = 'standard.yaml'
+SRC_CHECKPOINTER_YAML = 'standard.yaml'
 SRC_COMPOSER_YAML = 'empty.yaml'
 SRC_DATASET_YAML = 'train.yaml'
 SRC_LOGGER_YAML = 'wandb.yaml'

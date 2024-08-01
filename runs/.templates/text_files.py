@@ -1,7 +1,7 @@
 """ e.g.
 python3 -m pipeline <your-run-name> \
 --src-run-py=text_files.py \
---src-checkpointing-yaml=top_3.yaml \
+--src-checkpointer-yaml=top_3.yaml \
 --src-composer-yaml=grouped_text_files.yaml \
 --src-dataset-yaml=train_A100_server.yaml \
 --src-logger-yaml=wandb.yaml \
@@ -9,19 +9,19 @@ python3 -m pipeline <your-run-name> \
 """
 
 # config classes
-from pipeline.configs.checkpointing_config import TopKCheckpointManagerConfig
+from pipeline.configs.checkpointer_config import TopKCheckpointManagerConfig
 from pipeline.configs.composer_config import GroupingPathDistanceComposerConfig
 from pipeline.configs.dataset_config import DatasetConfig
 from pipeline.configs.logger_config import WandbLoggerConfig
 from pipeline.configs.model_config import ModelConfig
-from pipeline.configs.preprocessor_config import LMPreprocessorConfig
+from pipeline.configs.preprocessor_config import PreprocessorConfig
 from pipeline.configs.split_config import SplitConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 # main classes
 from pipeline.data.composers.composers import GroupingPathDistanceComposer
-from pipeline.data.preprocessing.completion_loss_preprocessor import CompletionLossPreprocessor
-from pipeline.outputs.checkpointing import TopKCheckpointManager
+from pipeline.data.preprocessors.completion_loss_preprocessor import CompletionLossPreprocessor
+from pipeline.outputs.checkpointers.top_k_checkpointer import TopKCheckpointManager
 from pipeline.outputs.loggers.wandb_logger import WandbLogger
 from pipeline.trainers.full_finetuning_trainer import FullFineTuningTrainer
 
@@ -34,21 +34,21 @@ from datasets import load_dataset
 
 def main() -> None:
     # configs
-    checkpointing_config = TopKCheckpointManagerConfig.from_yaml()
+    checkpointer_config = TopKCheckpointManagerConfig.from_yaml()
     composer_config = GroupingPathDistanceComposerConfig.from_yaml()
     dataset_config = DatasetConfig.from_yaml()
     logger_config = WandbLoggerConfig.from_yaml()
     model_config = ModelConfig.from_yaml()
-    preprocessor_config = LMPreprocessorConfig.from_yaml()
+    preprocessor_config = PreprocessorConfig.from_yaml()
     split_config = SplitConfig.from_yaml()
     trainer_config = FullFineTuningTrainerConfig.from_yaml()
 
     # checkpointing
-    checkpointer = TopKCheckpointManager(**checkpointing_config.dict)
+    checkpointer = TopKCheckpointManager(**checkpointer_config.dict)
 
     # logging
     logger_config.config = {
-        'checkpointing': {'name': TopKCheckpointManager.__name__, **checkpointing_config.dict},
+        'checkpointer': {'name': TopKCheckpointManager.__name__, **checkpointer_config.dict},
         'model': model_config.dict,
         'dataset': dataset_config.dict,
         'split': split_config.dict,

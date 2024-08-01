@@ -3,19 +3,19 @@ python3 -m pipeline <your-run-name> --src-composer-yaml=standard.yaml
 """
 
 # config classes
-from pipeline.configs.checkpointing_config import CheckpointManagerConfig
+from pipeline.configs.checkpointer_config import CheckpointManagerConfig
 from pipeline.configs.composer_config import ComposerConfig
 from pipeline.configs.dataset_config import DatasetConfig
 from pipeline.configs.logger_config import WandbLoggerConfig
 from pipeline.configs.model_config import ModelConfig
-from pipeline.configs.preprocessor_config import LMPreprocessorConfig
+from pipeline.configs.preprocessor_config import PreprocessorConfig
 from pipeline.configs.split_config import SplitConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 # main classes
 from pipeline.data.composers.composers import PathDistanceComposer
-from pipeline.data.preprocessing.lm_preprocessor import LMPreprocessor
-from pipeline.outputs.checkpointing import CheckpointManager
+from pipeline.data.preprocessors.lm_preprocessor import LMPreprocessor
+from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.loggers.wandb_logger import WandbLogger
 from pipeline.trainers.full_finetuning_trainer import FullFineTuningTrainer
 
@@ -28,21 +28,21 @@ from datasets import load_dataset
 
 def main() -> None:
     # configs
-    checkpointing_config = CheckpointManagerConfig.from_yaml()
+    checkpointer_config = CheckpointManagerConfig.from_yaml()
     composer_config = ComposerConfig.from_yaml()
     dataset_config = DatasetConfig.from_yaml()
     logger_config = WandbLoggerConfig.from_yaml()
     model_config = ModelConfig.from_yaml()
-    preprocessor_config = LMPreprocessorConfig.from_yaml()
+    preprocessor_config = PreprocessorConfig.from_yaml()
     split_config = SplitConfig.from_yaml()
     trainer_config = FullFineTuningTrainerConfig.from_yaml()
 
     # checkpointing
-    checkpointer = CheckpointManager(**checkpointing_config.dict)
+    checkpointer = CheckpointManager(**checkpointer_config.dict)
 
     # logging
     logger_config.config = {
-        'checkpointing': {'name': CheckpointManager.__name__, **checkpointing_config.dict},
+        'checkpointer': {'name': CheckpointManager.__name__, **checkpointer_config.dict},
         'model': model_config.dict,
         'dataset': dataset_config.dict,
         'split': split_config.dict,
