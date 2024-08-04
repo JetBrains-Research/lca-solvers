@@ -1,8 +1,5 @@
-from pipeline.data.composers.chunking_mixins import ChunkerMixin
-from pipeline.data.composers.filtering_mixins import FilterMixin
-from pipeline.data.composers.harvesting_mixins import HarvesterMixin
-from pipeline.data.composers.ranking_mixins import RankerMixin
 from pipeline.data.composed_datapoint import ComposedDatapoint, BatchComposedDatapoint
+from pipeline.data.composers.chain import ComposerChain
 from pipeline.data.datapoint import Datapoint, BatchDatapoint
 
 from abc import ABC, abstractmethod
@@ -39,7 +36,7 @@ class ComposerBase(ABC):
             content='{content}',
         )
 
-        for i, line in enumerate(template_with_inserted_path.split('\n')):
+        for i, line in enumerate(template_with_inserted_path.splitlines()):
             if '{content}' in line:
                 offset = i
                 break
@@ -92,11 +89,10 @@ class ComposerBase(ABC):
         )
 
 
-class GrainedComposer(ComposerBase, ChunkerMixin, FilterMixin, RankerMixin, HarvesterMixin):
+class ChainedComposer(ComposerBase):
+    def __init__(self, chain: ComposerChain, *args, **kwargs) -> None:
+        self.chain = chain
+        super().__init__(*args, **kwargs)
+
     def compose_context(self, datapoint: Datapoint) -> str:
-        chunks = self.chunk(datapoint)
-        chunks = self.filter(chunks, datapoint)
-        ranks = self.rank(chunks, datapoint)
-        chunks = [chunk for _, chunk in sorted(zip(ranks, chunks), key=lambda x: x[0])]
-        context = self.harvest(chunks, datapoint)
-        return context
+        return self.chain(datapoint)
