@@ -13,7 +13,7 @@ from pipeline.configs.split_config import SplitConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 # main classes
-from pipeline.data.composers.composers import PathDistanceComposer
+from pipeline.data.composers.old.composers import PathDistanceComposer
 from pipeline.data.preprocessors.lm_preprocessor import LMPreprocessor
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.loggers.wandb_logger import WandbLogger

@@ -9,7 +9,7 @@ from pipeline.configs.split_config import SplitConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 # main classes
-from pipeline.data.composers.composers import InclusiveFileExtensionPathDistanceComposer
+from pipeline.data.composers.old.composers import InclusiveFileExtensionPathDistanceComposer
 from pipeline.data.preprocessors.lm_preprocessor import LMPreprocessor
 from pipeline.outputs.checkpointers.top_k_checkpointer import TopKCheckpointManager
 from pipeline.outputs.loggers.wandb_logger import WandbLogger
@@ -47,7 +47,7 @@ def main() -> None:
         'logger': {'name': WandbLogger.__name__, **logger_config.dict},
         'trainer': {'name': FullFineTuningTrainer.__name__, **trainer_config.dict},
     }
-    logger = WandbLogger(checkpointer, **logger_config.dict)
+    logger = WandbLogger(checkpointer, **logger_config.dict, id='jslafkjskjdfl')
 
     # tokenizer and model
     load_from = checkpointer.get_model_subdirectory()

@@ -19,7 +19,7 @@ from pipeline.configs.split_config import SplitConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 # main classes
-from pipeline.data.composers.composers import GroupingPathDistanceComposer
+from pipeline.data.composers.old.composers import GroupingPathDistanceComposer
 from pipeline.data.preprocessors.completion_loss_preprocessor import CompletionLossPreprocessor
 from pipeline.outputs.checkpointers.top_k_checkpointer import TopKCheckpointManager
 from pipeline.outputs.loggers.wandb_logger import WandbLogger
