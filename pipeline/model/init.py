@@ -1,8 +1,10 @@
+from pipeline.configs.model_config import ModelConfig
 from pipeline.environment.hardware import get_free_device, get_optimal_dtype
 
 from enum import Enum
 
 import torch
+from omegaconf import DictConfig
 from transformers.models.auto import MODEL_FOR_CAUSAL_LM_MAPPING
 from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
 from transformers import (
@@ -22,10 +24,10 @@ class AttentionImplementation(str, Enum):
     EAGER = 'eager'
 
 
-def init_tokenizer(tokenizer_name: str, trust_remote_code: bool) -> PreTrainedTokenizerBase:
+def init_tokenizer(config: ModelConfig) -> PreTrainedTokenizerBase:
     return AutoTokenizer.from_pretrained(
-        pretrained_model_name_or_path=tokenizer_name,
-        trust_remote_code=trust_remote_code,
+        pretrained_model_name_or_path=config.tokenizer_name,
+        trust_remote_code=config.trust_remote_code,
     )
 
 
@@ -48,49 +50,30 @@ def get_optimal_attn(model_name: str, device: torch.device, dtype: torch.dtype) 
         return AttentionImplementation.EAGER
 
 
-def init_model(load_from: str | None,
-               model_name: str,
-               trust_remote_code: bool,
-               use_cache: bool,
-               device: torch.device,
-               dtype: torch.dtype,
-               attn_implementation: AttentionImplementation | None,
-               compile: bool,  # noqa: built-in function that won't be used
-               ) -> PreTrainedModel:
-    if device is None:
-        device = get_free_device()
-    if dtype is None:
-        dtype = get_optimal_dtype()
-    if attn_implementation is None:
-        attn_implementation = get_optimal_attn(model_name, device, dtype)
-    if load_from is None:
-        load_from = model_name
+def init_model(config: ModelConfig) -> PreTrainedModel:
+    if config.device is None:
+        config.device = get_free_device()
+    if config.dtype is None:
+        config.dtype = get_optimal_dtype()
+    if config.attn_implementation is None:
+        config.attn_implementation = get_optimal_attn(config.model_name, config.device, config.dtype)
+    if config.load_from is None:
+        config.load_from = config.model_name
 
     model = AutoModelForCausalLM.from_pretrained(
-        pretrained_model_name_or_path=load_from,
-        trust_remote_code=trust_remote_code,
-        device_map=device,
-        torch_dtype=dtype,
-        attn_implementation=attn_implementation,
-        use_cache=use_cache,
+        pretrained_model_name_or_path=config.load_from,
+        trust_remote_code=config.trust_remote_code,
+        device_map=config.device,
+        torch_dtype=config.dtype,
+        attn_implementation=config.attn_implementation,
+        use_cache=config.use_cache,
     )
 
-    if compile:
+    if config.compile:
         model = torch.compile(model)
     return model
 
 
-def init_tokenizer_model(load_from: str | None,
-                         tokenizer_name: str,
-                         model_name: str,
-                         trust_remote_code: bool,
-                         use_cache: bool,
-                         device: torch.device,
-                         dtype: torch.dtype,
-                         attn_implementation: AttentionImplementation | None,
-                         compile: bool,  # noqa: built-in function that won't be used
-                         ) -> tuple[PreTrainedTokenizerBase, PreTrainedModel]:
-    return (
-        init_tokenizer(tokenizer_name, trust_remote_code),
-        init_model(load_from, model_name, trust_remote_code, use_cache, device, dtype, attn_implementation, compile),
-    )
+def init_tokenizer_model(loaded_config: DictConfig, **kwargs) -> tuple[PreTrainedTokenizerBase, PreTrainedModel]:
+    config = ModelConfig.from_dict(dict(loaded_config) | kwargs)
+    return init_tokenizer(config), init_model(config)

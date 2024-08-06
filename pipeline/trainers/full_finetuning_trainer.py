@@ -2,6 +2,7 @@ from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.checkpointers.data_structures import Checkpoint
 from pipeline.outputs.loggers.logger_base import Log, LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.trainers.trainer_base import TrainerBase
 from pipeline.trainers.utils.fused_sampler import FusedSampler
 from pipeline.trainers.utils.schedulers import get_lr_from_cosine_scheduler_with_linear_warmup
 
@@ -17,7 +18,7 @@ from tqdm.auto import trange, tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
-class FullFineTuningTrainer:
+class FullFineTuningTrainer(TrainerBase):
     def __init__(self,
                  model: PreTrainedModel,
                  tokenizer: PreTrainedTokenizerBase,

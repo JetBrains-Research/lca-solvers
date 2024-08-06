@@ -1,5 +1,4 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import CHECKPOINTS_DIR, CHECKPOINTER_YAML
 from pipeline.outputs.checkpointers.data_structures import LoadingMode
 from pipeline.outputs.metrics.metric_base import MetricName
 
@@ -9,11 +8,9 @@ from typing import Callable
 
 @dataclass
 class CheckpointManagerConfig(ConfigBase):
-    _default_path = CHECKPOINTER_YAML
-
     init_from: LoadingMode | str
     main_metric: MetricName
-    directory: str = CHECKPOINTS_DIR
+    directory: str
 
     # if you want to change it, override the following function accordingly
     checkpoint_directory_template: str = '{iteration_number:04d}'

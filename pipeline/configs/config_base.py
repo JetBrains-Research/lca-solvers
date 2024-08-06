@@ -1,7 +1,6 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, fields
 from pprint import pformat
-from typing import TypeVar, Type
+from typing import Any, TypeVar, Type
 
 import yaml
 
@@ -9,16 +8,15 @@ T = TypeVar('T')
 
 
 @dataclass
-class ConfigBase(ABC):
-    dict = property(asdict)
-
-    @property
-    @abstractmethod
-    def _default_path(self) -> str:
-        raise NotImplementedError
-
+class ConfigBase:
     def __str__(self) -> str:
         return pformat(self)
+
+    @classmethod
+    def from_dict(cls: Type[T], dictionary: dict[str, Any]) -> T:
+        config_fields = set(field.name for field in fields(cls))
+        kwargs = {key: value for key, value in dictionary.items() if key in config_fields}
+        return cls(**kwargs)  # noqa: PyCharm bug?
 
     @classmethod
     def from_yaml(cls: Type[T], path: str | None = None) -> T:
@@ -27,3 +25,5 @@ class ConfigBase(ABC):
 
         with open(path) as stream:
             return cls(**yaml.safe_load(stream))  # noqa: PyCharm bug?
+
+    dict = property(asdict)

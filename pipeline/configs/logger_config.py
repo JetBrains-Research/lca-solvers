@@ -1,5 +1,5 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import LOGS_DIR, LOGGER_YAML, get_run_name
+from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 
 from dataclasses import dataclass
 from typing import Any
@@ -7,21 +7,18 @@ from typing import Any
 
 @dataclass
 class LocalLoggerConfig(ConfigBase):
-    _default_path = LOGGER_YAML
-
     train_csv: str
     valid_csv: str
     stdout_file: str
     stderr_file: str
-    directory: str = LOGS_DIR
+    directory: str
 
 
-@dataclass(kw_only=True)
+@dataclass
 class WandbLoggerConfig(LocalLoggerConfig):
-    _default_path = LOGGER_YAML
-
+    checkpointer: CheckpointManager
     project: str
-    name: str = get_run_name()
+    name: str
     config: dict[str, Any] | None = None
     group: str | None = None
     notes: str | None = None

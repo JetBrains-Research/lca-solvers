@@ -75,6 +75,7 @@ class LocalLogger(LoggerBase):
         self.valid_csv = valid_csv
 
         self.logger = logging.getLogger(__name__)
+        self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG)
         formatter = JsonFormatter()
 
@@ -91,6 +92,7 @@ class LocalLogger(LoggerBase):
             stderr_handler.setFormatter(formatter)
             stderr_handler.addFilter(lambda record: record.levelno >= logging.WARNING)
 
+        # self.logger.handlers.clear()
         self.logger.addHandler(stdout_handler)
         self.logger.addHandler(stderr_handler)
 

@@ -1,3 +1,0 @@
-init_from: scratch
-main_metric: cross_entropy
-max_checkpoints_num: 3

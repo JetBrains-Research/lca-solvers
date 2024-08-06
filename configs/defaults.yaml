@@ -1,0 +1,20 @@
+run_name: ???
+
+defaults:
+  - checkpointer: top_k_checkpointer/top_3
+  - composer: chained_composer/standard
+  - dataset: train_A100_server
+  - logger: wandb/wandb
+  - model: dseek1p3
+  - preprocessor: completion_loss_preprocessor/full_completion_loss_16k
+  - split: '256_5'
+  - trainer: full_finetuning_trainer/medium_lr
+
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .

@@ -1,0 +1,1 @@
+ordered_groups: [[.json], [.yaml, .yml], [.sh], [.md, .txt, .rst]]

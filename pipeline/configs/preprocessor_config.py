@@ -1,13 +1,13 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import PREPROCESSOR_YAML
 
 from dataclasses import dataclass
+
+from transformers import PreTrainedTokenizerBase
 
 
 @dataclass
 class PreprocessorConfig(ConfigBase):
-    _default_path = PREPROCESSOR_YAML
-
+    tokenizer: PreTrainedTokenizerBase
     max_seq_len: int
     context_tokens: int | float
     loss_ratio: float

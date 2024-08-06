@@ -17,4 +17,6 @@ class FileChunker(ComposerBlock, ABC):
 
 class FileGrainedChunker(FileChunker):  # identity chunker
     def __call__(self, files: Sequence[File], _datapoint: Datapoint) -> Sequence[Chunk]:
-        return [Chunk(content=file.content, metadata=file.metadata, file_ref=file) for file in files]
+        return [Chunk(content=file.content, metadata=file.metadata, file_ref=file) for file in files
+                # TODO: remove temporary hardcoded solution for data leakage
+                if file.metadata['filename'] != 'tinygrad/llops/ops_llvm.py']

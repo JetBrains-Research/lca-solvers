@@ -1,0 +1,2 @@
+dropout: 0.5
+random_seed: 1337

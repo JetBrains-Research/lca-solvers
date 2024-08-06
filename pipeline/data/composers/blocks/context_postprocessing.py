@@ -15,7 +15,7 @@ class ContextPostprocessor(ComposerBlock, ABC):
 
 
 class PartialMemoryPostprocessor(ContextPostprocessor):
-    def __init__(self, dropout: float, random_seed: int | None = None) -> None:
+    def __init__(self, dropout: float, random_seed: int | None) -> None:
         if not 0 <= dropout <= 1:
             raise ValueError('dropout must be selected from the interval [0, 1]. '
                              f'Got {dropout} instead.')
@@ -23,7 +23,7 @@ class PartialMemoryPostprocessor(ContextPostprocessor):
         self.generator = random.Random(random_seed)
 
     def __call__(self, context: str, _datapoint: Datapoint) -> str:
-        # TODO: discuss the ability to drop path comments
+        # dropping of path comments can occasionally happen
         return '\n'.join(line for line in context.splitlines() if self.generator.random() >= self.dropout)
 
 

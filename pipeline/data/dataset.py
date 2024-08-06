@@ -1,4 +1,4 @@
-from pipeline.data.composers.base_composers import ComposerBase
+from pipeline.data.composers.composer_base import ComposerBase
 from pipeline.data.preprocessors.preprocessor_base import PreprocessorBase
 
 import random

@@ -56,7 +56,7 @@ class ComposerChain:
 
     def __call__(self, datapoint: Datapoint) -> str:
         x = [
-            File(content=cnt, metadata=dict(filename=fn))
+            File(content=cnt, metadata={'filename': fn})
             for fn, cnt in zip(*datapoint.repo_snapshot.values())
         ]
         for block in self.blocks:

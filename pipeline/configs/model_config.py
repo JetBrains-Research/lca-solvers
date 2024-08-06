@@ -1,24 +1,22 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import MODEL_YAML
-from pipeline.model.init import AttentionImplementation
 
 from dataclasses import dataclass
+from typing import Literal
 
 import torch
 
 
 @dataclass
 class ModelConfig(ConfigBase):
-    _default_path = MODEL_YAML
-
     tokenizer_name: str
     model_name: str
     trust_remote_code: bool
+    load_from: str | None
 
     use_cache: bool = False
     device: torch.device | None = None
     dtype: torch.dtype | None = None
-    attn_implementation: AttentionImplementation | None = None
+    attn_implementation: Literal['flash_attention_2', 'sdpa', 'eager'] | None = None
     compile: bool = True
 
     def __post_init__(self) -> None:
@@ -27,6 +25,3 @@ class ModelConfig(ConfigBase):
 
         if isinstance(self.dtype, str):
             self.dtype = getattr(torch, self.dtype)
-
-        if self.attn_implementation is not None:
-            self.attn_implementation = AttentionImplementation(self.attn_implementation)

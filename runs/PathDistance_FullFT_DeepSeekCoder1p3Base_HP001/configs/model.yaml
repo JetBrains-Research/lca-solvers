@@ -1,4 +1,0 @@
-tokenizer_name: deepseek-ai/deepseek-coder-1.3b-base
-model_name: deepseek-ai/deepseek-coder-1.3b-base
-trust_remote_code: True
-compile: False

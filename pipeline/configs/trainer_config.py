@@ -1,14 +1,25 @@
 from pipeline.configs.config_base import ConfigBase
-from pipeline.environment.run_directory import TRAINER_YAML
+from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
+from pipeline.outputs.loggers.logger_base import LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName
 
 from dataclasses import dataclass
 from typing import Literal
 
+from datasets import Dataset
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
+
 
 @dataclass
 class FullFineTuningTrainerConfig(ConfigBase):
-    _default_path = TRAINER_YAML
+    model: PreTrainedModel
+    tokenizer: PreTrainedTokenizerBase
+    train_ds: Dataset
+    valid_ds: Dataset | None
+
+    # Auxiliary objects
+    checkpointer: CheckpointManager
+    logger: LoggerBase
 
     # Iteration parameters
     max_iters: int

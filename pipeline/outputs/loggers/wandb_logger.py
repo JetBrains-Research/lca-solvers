@@ -1,4 +1,3 @@
-from pipeline.environment.run_directory import get_run_name
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.loggers.local_logger import LocalLogger
 from pipeline.outputs.loggers.logger_base import Log
@@ -18,7 +17,7 @@ class WandbLogger(LocalLogger):
                  ) -> None:
         super().__init__(train_csv, valid_csv, stdout_file, stderr_file, directory)
         wandb_init_kwargs['resume'] = wandb_init_kwargs.get('resume', checkpointer.get_wandb_resume_mode())
-        wandb_init_kwargs['id'] = wandb_init_kwargs.get('id', get_run_name())
+        wandb_init_kwargs['id'] = wandb_init_kwargs.get('id', wandb_init_kwargs['name'])
         wandb.init(**wandb_init_kwargs)
 
     def log(self, metrics: Log) -> Log:

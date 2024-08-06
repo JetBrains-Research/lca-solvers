@@ -14,7 +14,7 @@ class ChunkRanker(ComposerBlock, ABC):
         return ChunkRanker, ChunkSorter
 
 
-class PathDistanceRanker(ChunkRanker):
+class NegativePathDistanceRanker(ChunkRanker):
     @staticmethod
     def _path_distance(path_from: str, path_to: str) -> int:
         path_from = os.path.normpath(path_from)
@@ -43,4 +43,19 @@ class PathDistanceRanker(ChunkRanker):
         for chunk in chunks:
             dist = self._path_distance(chunk.file_ref.metadata['filename'], path_to)
             chunk.rank.append(-dist)
+        return chunks
+
+
+class FileExtensionRanker(ChunkRanker):
+    def __init__(self, ordered_groups: list[list[str]]) -> None:
+        self.group_weights = {
+            extension: weight
+            for weight, group in enumerate(ordered_groups)
+            for extension in group
+        }
+
+    def __call__(self, chunks: Sequence[Chunk], _datapoint: Datapoint) -> Sequence[Chunk]:
+        for chunk in chunks:
+            extension = '.' + chunk.file_ref.metadata['filename'].split('.')[-1]
+            chunk.rank.append(self.group_weights.get(extension, -1))
         return chunks

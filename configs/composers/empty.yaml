@@ -1,5 +1,0 @@
-# see raw GrainedComposer in pipeline/data/composers/base_composers.py
-pre_context_prompt: ''
-chunks_sep: "\n\n"
-post_context_prompt: ''
-path_comment_template: '{content}'
