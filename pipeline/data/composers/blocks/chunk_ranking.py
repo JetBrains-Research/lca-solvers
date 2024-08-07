@@ -6,6 +6,9 @@ import warnings
 from abc import ABC
 from typing import Sequence, Type
 
+import tree_sitter
+import tree_sitter_python
+
 
 class ChunkRanker(ComposerBlock, ABC):
     @property
@@ -58,4 +61,32 @@ class FileExtensionRanker(ChunkRanker):
         for chunk in chunks:
             extension = '.' + chunk.file_ref.metadata['filename'].split('.')[-1]
             chunk.rank.append(self.group_weights.get(extension, -1))
+        return chunks
+
+
+class FunctionCallRanker(ChunkRanker):
+    ENCODING = 'utf8'
+
+    def __init__(self, is_relative: bool) -> None:
+        self.is_relative = is_relative
+
+        py_language = tree_sitter.Language(tree_sitter_python.language())
+        self.parser = tree_sitter.Parser(py_language)
+
+    def dfs_count(self, node: tree_sitter.Node) -> int:
+        return (node.type == 'call') + sum(self.dfs_count(child) for child in node.children)
+
+    def __call__(self, chunks: Sequence[Chunk], _datapoint: Datapoint) -> Sequence[Chunk]:
+        for chunk in chunks:
+            if chunk.file_ref.metadata['filename'].endswith('.py'):
+                bytecode = bytes(chunk.content, self.ENCODING)
+                tree = self.parser.parse(bytecode)
+                num_calls = self.dfs_count(tree.root_node)
+            else:
+                num_calls = 0
+
+            if self.is_relative:
+                num_calls /= len(chunk.content)
+
+            chunk.rank.append(num_calls)
         return chunks

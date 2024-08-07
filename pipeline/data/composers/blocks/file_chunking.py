@@ -62,7 +62,7 @@ class CodeSegmentGrainedChunker(FileChunker):
         py_language = tree_sitter.Language(tree_sitter_python.language())
         self.parser = tree_sitter.Parser(py_language)
 
-    def dfs_segmentation(self, segments: list[Segment], node: tree_sitter.Node) -> None:
+    def dfs_segmentation(self, node: tree_sitter.Node, segments: list[Segment]) -> None:
         segment_type = CodeSegment.from_node(node)
 
         if segment_type != CodeSegment.UNDEFINED:
@@ -70,7 +70,7 @@ class CodeSegmentGrainedChunker(FileChunker):
                 segments.append(Segment(node.start_byte, segment_type))
         else:
             for child in node.children:
-                self.dfs_segmentation(segments, child)
+                self.dfs_segmentation(child, segments)
 
     @staticmethod
     def remove_leading_whitespaces(string: str) -> str:
@@ -93,7 +93,7 @@ class CodeSegmentGrainedChunker(FileChunker):
             segments = list()
             bytecode = bytes(file.content, self.ENCODING)
             tree = self.parser.parse(bytecode)
-            self.dfs_segmentation(segments, tree.root_node)
+            self.dfs_segmentation(tree.root_node, segments)
 
             dummy_segment = Segment(len(bytecode), CodeSegment.UNDEFINED)
             segments.append(dummy_segment)

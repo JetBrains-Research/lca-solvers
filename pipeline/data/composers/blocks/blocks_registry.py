@@ -4,6 +4,7 @@ from pipeline.data.composers.blocks.chunk_harvesting import (
 )
 from pipeline.data.composers.blocks.chunk_ranking import (
     NegativePathDistanceRanker,
+    FunctionCallRanker,
     FileExtensionRanker,
 )
 from pipeline.data.composers.blocks.chunk_sorting import (
@@ -17,6 +18,7 @@ from pipeline.data.composers.blocks.context_postprocessing import (
 )
 from pipeline.data.composers.blocks.file_chunking import (
     FileGrainedChunker,
+    CodeSegmentGrainedChunker,
 )
 from pipeline.data.composers.blocks.file_filtering import (
     InclusiveFileExtensionFilter,
@@ -44,9 +46,11 @@ BLOCKS_REGISTRY = {
 
     # file_chunking
     'file_grained_chunker': FileGrainedChunker,
+    'code_segment_grained_chunker': CodeSegmentGrainedChunker,
 
     # chunk_ranking
     'negative_path_distance_ranker': NegativePathDistanceRanker,
+    'function_call_ranker': FunctionCallRanker,
     'file_extension_ranker': FileExtensionRanker,
 
     # chunk_sorting
