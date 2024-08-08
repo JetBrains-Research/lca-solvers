@@ -12,10 +12,12 @@ class ComposerBase(ABC):
                  pre_context_prompt: str,
                  post_context_prompt: str,
                  path_comment_template: str,
+                 recalculate_random_category: bool,
                  ) -> None:
         self.pre_context_prompt = pre_context_prompt
         self.post_context_prompt = post_context_prompt
         self.path_comment_template = path_comment_template
+        self.recalculate_random_category = recalculate_random_category
 
     def get_pre_context_prompt(self, datapoint: Datapoint) -> str:
         return self.pre_context_prompt.format(datapoint.repo)
@@ -33,7 +35,7 @@ class ComposerBase(ABC):
             content='{content}',
         )
 
-        for i, line in enumerate(template_with_inserted_path.splitlines()):
+        for i, line in enumerate(template_with_inserted_path.split('\n')):
             if '{content}' in line:
                 offset = i
                 break
@@ -52,6 +54,14 @@ class ComposerBase(ABC):
 
     def compose(self, datapoint: dict[str, Any]) -> ComposedDatapoint:
         datapoint = Datapoint(**datapoint)
+
+        if self.recalculate_random_category:
+            non_categorized_lines = set(range(datapoint.completion_file['content'].count('\n') + 1))
+            for category, lines in datapoint.completion_lines.items():
+                if category != 'random':
+                    non_categorized_lines.difference_update(lines)
+            datapoint.completion_lines['random'] = list(non_categorized_lines)
+
         return ComposedDatapoint(
             pre_context_prompt=self.get_pre_context_prompt(datapoint),
             composed_context=self.compose_context(datapoint) + self.get_post_context_prompt(datapoint),

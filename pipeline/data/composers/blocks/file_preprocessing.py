@@ -18,5 +18,5 @@ class FilePreprocessor(ComposerBlock, ABC):
 class EmptyLinesRemovalPreprocessor(FilePreprocessor):
     def __call__(self, files: Sequence[File], _datapoint: Datapoint) -> Sequence[File]:
         for file in files:
-            file.content = '\n'.join(line for line in file.content.splitlines() if line.strip())
+            file.content = '\n'.join(line for line in file.content.split('\n') if line.strip())
         return files

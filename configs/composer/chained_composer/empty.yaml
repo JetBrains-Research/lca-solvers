@@ -1,6 +1,7 @@
 pre_context_prompt: ''
 post_context_prompt: ''
 path_comment_template: '{content}'
+recalculate_random_category: True
 
 block_configs: [
   file_chunking/file_grained_chunker/no_args.yaml,

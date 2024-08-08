@@ -4,7 +4,7 @@
 runs/**/checkpoints
 runs/**/logs/stderr.json
 runs/**/logs/stdout.json
-runs/**/wandb
+wandb
 runs/test
 venv
 main.ipynb

@@ -26,4 +26,4 @@ class ConfigBase:
         with open(path) as stream:
             return cls(**yaml.safe_load(stream))  # noqa: PyCharm bug?
 
-    dict = property(asdict)
+    dict = property(vars)

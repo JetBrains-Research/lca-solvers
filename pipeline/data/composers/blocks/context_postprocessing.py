@@ -24,7 +24,7 @@ class PartialMemoryPostprocessor(ContextPostprocessor):
 
     def __call__(self, context: str, _datapoint: Datapoint) -> str:
         # dropping of path comments can occasionally happen
-        return '\n'.join(line for line in context.splitlines() if self.generator.random() >= self.dropout)
+        return '\n'.join(line for line in context.split('\n') if self.generator.random() >= self.dropout)
 
 
 class LineLengthPostprocessor(ContextPostprocessor):
@@ -33,12 +33,12 @@ class LineLengthPostprocessor(ContextPostprocessor):
         self.max_len = max_len
 
     def __call__(self, context: str, _datapoint: Datapoint) -> str:
-        return '\n'.join(line for line in context.splitlines() if self.min_len <= len(line) <= self.max_len)
+        return '\n'.join(line for line in context.split('\n') if self.min_len <= len(line) <= self.max_len)
 
 
 class LineStripPostprocessor(ContextPostprocessor):
     def __call__(self, context: str, _datapoint: Datapoint) -> str:
-        return '\n'.join(line.strip() for line in context.splitlines())
+        return '\n'.join(line.strip() for line in context.split('\n'))
 
 
 class InverseFrequencyMemoryPostprocessor(ContextPostprocessor):
