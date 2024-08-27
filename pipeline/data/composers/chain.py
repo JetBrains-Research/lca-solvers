@@ -1,4 +1,5 @@
 from pipeline.data.datapoint import Datapoint
+from pipeline.data.composers.utils import ReprMixin
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -22,7 +23,7 @@ class Chunk:
 BlockArgs = Sequence[File] | Sequence[Chunk]
 
 
-class ComposerBlock(ABC):
+class ComposerBlock(ABC, ReprMixin):
     first_block_permit: bool = False
     last_block_permit: bool = False
 

@@ -68,13 +68,20 @@ def main(config: DictConfig) -> None:
         loaded_config=config.checkpointer,
         directory=checkpoints_dir,
     )
+
+    composer = init_composer(
+        cls_name=composer_cls,
+        loaded_config=config.composer,
+        configs_dir=CONFIGS_DIR,
+    )
+
     logger = init_logger(
         cls_name=logger_cls,
         loaded_config=config.logger,
         directory=logs_dir,
         checkpointer=checkpointer,
         name=config.run_name,
-        config=dict(config) | {'config_choices': config_choices},
+        config=dict(config) | {'config_choices': config_choices, 'composer_initialization_code': repr(composer)},
     )
 
     load_from = checkpointer.get_model_subdirectory()
@@ -83,12 +90,6 @@ def main(config: DictConfig) -> None:
     else:
         logger.message(f'The model is initialized from {load_from}.')
     tokenizer, model = init_tokenizer_model(config.model, load_from=load_from)
-
-    composer = init_composer(
-        cls_name=composer_cls,
-        loaded_config=config.composer,
-        configs_dir=CONFIGS_DIR,
-    )
 
     preprocessor = init_preprocessor(
         cls_name=preprocessor_cls,
