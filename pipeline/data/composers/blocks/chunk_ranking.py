@@ -2,6 +2,7 @@ from pipeline.data.composers.chain import Chunk, ComposerBlock
 from pipeline.data.datapoint import Datapoint
 
 import os
+import random
 import warnings
 from abc import ABC
 from typing import Sequence, Type
@@ -89,4 +90,16 @@ class FunctionCallRanker(ChunkRanker):
                 num_calls /= len(chunk.content)
 
             chunk.rank.append(num_calls)
+        return chunks
+
+
+class RandomRanker(ChunkRanker):
+    def __init__(self, random_seed: int | None) -> None:
+        self.generator = random.Random(random_seed)
+
+    def __call__(self, chunks: Sequence[Chunk], _datapoint: Datapoint) -> Sequence[Chunk]:
+        ranks = list(range(len(chunks)))
+        self.generator.shuffle(ranks)
+        for rank, chunk in zip(ranks, chunks):
+            chunk.rank.append(rank)
         return chunks

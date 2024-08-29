@@ -6,6 +6,7 @@ from pipeline.data.composers.blocks.chunk_ranking import (
     NegativePathDistanceRanker,
     FunctionCallRanker,
     FileExtensionRanker,
+    RandomRanker,
 )
 from pipeline.data.composers.blocks.chunk_sorting import (
     LexicographicSorter,
@@ -30,6 +31,7 @@ from pipeline.data.composers.blocks.file_filtering import (
 )
 from pipeline.data.composers.blocks.file_preprocessing import (
     EmptyLinesRemovalPreprocessor,
+    DeclarationOnlyPreprocessor,
 )
 
 BLOCKS_REGISTRY = {
@@ -43,6 +45,7 @@ BLOCKS_REGISTRY = {
 
     # file_preprocessing
     'empty_lines_removal_preprocessor': EmptyLinesRemovalPreprocessor,
+    'declaration_only_preprocessor': DeclarationOnlyPreprocessor,
 
     # file_chunking
     'file_grained_chunker': FileGrainedChunker,
@@ -52,6 +55,7 @@ BLOCKS_REGISTRY = {
     'negative_path_distance_ranker': NegativePathDistanceRanker,
     'function_call_ranker': FunctionCallRanker,
     'file_extension_ranker': FileExtensionRanker,
+    'random_ranker': RandomRanker,
 
     # chunk_sorting
     'lexicographic_sorter': LexicographicSorter,
