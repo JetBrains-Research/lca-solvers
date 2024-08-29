@@ -1,6 +1,7 @@
 from pipeline.data.composers.chain import File, ComposerBlock
 from pipeline.data.datapoint import Datapoint
 
+import random
 from abc import ABC
 from typing import Sequence, Type
 
@@ -48,6 +49,8 @@ class FileLengthFilter(FileFilter):
 
 
 class TokenizedFileLengthFilter(FileFilter):
+    requires_tokenizer = True
+
     def __init__(self, tokenizer: PreTrainedTokenizerBase, min_len: int, max_len: int) -> None:
         self.tokenizer = tokenizer
         self.min_len = min_len
@@ -68,20 +71,37 @@ class TokenizedFileLengthFilter(FileFilter):
 
 
 class CharTokenRatioFilter(FileFilter):
-    def __init__(self, tokenizer: PreTrainedTokenizerBase, min_ratio: float, max_ratio: float) -> None:
+    requires_tokenizer = True
+
+    def __init__(self,
+                 tokenizer: PreTrainedTokenizerBase,
+                 min_ratio: float,
+                 max_ratio: float,
+                 subsequence_len: int,
+                 random_seed: int | None,
+                 ) -> None:
         self.tokenizer = tokenizer
         self.min_ratio = min_ratio
         self.max_ratio = max_ratio
+        self.subsequence_len = subsequence_len
+        self.generator = random.Random(random_seed)
 
     def __call__(self, files: Sequence[File], _datapoint: Datapoint) -> Sequence[File]:
         filtered_files = list()
 
         for file in files:
-            if 'num_tokens' not in file.metadata:
-                tokenized_file = self.tokenizer(file.content, return_attention_mask=False).input_ids
-                file.metadata['num_tokens'] = len(tokenized_file)
+            if len(file.content) <= self.subsequence_len:
+                subsequence = file.content
+            else:
+                # N.B. this algorithm does NOT preserve the uniformity of token sampling
+                # only the uniformity of subsequences
+                start_idx = self.generator.randrange(len(file.content) - self.subsequence_len + 1)
+                subsequence = file.content[start_idx:start_idx + self.subsequence_len]
 
-            if self.min_ratio <= len(file.content) / file.metadata['num_tokens'] <= self.max_ratio:
+            tokenized_subsequence = self.tokenizer(subsequence, return_attention_mask=False).input_ids
+            ratio = len(subsequence) / len(tokenized_subsequence)
+
+            if self.min_ratio <= ratio <= self.max_ratio:
                 filtered_files.append(file)
 
         return filtered_files

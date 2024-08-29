@@ -7,9 +7,15 @@ import os
 
 import yaml
 from omegaconf import DictConfig
+from transformers import PreTrainedTokenizerBase
 
 
-def init_composer(cls_name: str, loaded_config: DictConfig, configs_dir: str, **kwargs) -> ComposerBase:
+def init_composer(cls_name: str,
+                  loaded_config: DictConfig,
+                  configs_dir: str,
+                  tokenizer: PreTrainedTokenizerBase,
+                  **kwargs,
+                  ) -> ComposerBase:
     config = CONFIGS_REGISTRY[cls_name].from_dict(dict(loaded_config) | kwargs)
 
     if cls_name == 'chained_composer':
@@ -23,7 +29,11 @@ def init_composer(cls_name: str, loaded_config: DictConfig, configs_dir: str, **
             if block_config is None:
                 block_config = dict()
 
-            block = BLOCKS_REGISTRY[block_name](**block_config)
+            block_cls = BLOCKS_REGISTRY[block_name]
+            if block_cls.requires_tokenizer:
+                block_config['tokenizer'] = tokenizer
+
+            block = block_cls(**block_config)
             config.blocks.append(block)
 
     composer = COMPOSERS_REGISTRY[cls_name](**config.dict)

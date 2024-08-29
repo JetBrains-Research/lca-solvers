@@ -1,0 +1,4 @@
+min_ratio: 1.5
+max_ratio: !!float .inf
+subsequence_len: 2048
+random_seed: 1337

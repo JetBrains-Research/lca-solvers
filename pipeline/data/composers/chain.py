@@ -26,6 +26,7 @@ BlockArgs = Sequence[File] | Sequence[Chunk]
 class ComposerBlock(ABC, ReprMixin):
     first_block_permit: bool = False
     last_block_permit: bool = False
+    requires_tokenizer: bool = False
 
     @property
     @abstractmethod
