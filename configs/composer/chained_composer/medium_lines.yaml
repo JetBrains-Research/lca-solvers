@@ -1,0 +1,14 @@
+pre_context_prompt: "# {}\n"
+post_context_prompt: "\n\n"
+path_comment_template: "# {filename}\n{content}"
+recalculate_random_category: True
+
+block_configs: [
+  file_filtering/empty_file_filter/no_args.yaml,
+  file_filtering/char_token_ratio_filter/1p5_inf.yaml,
+  file_chunking/code_segment_grained_chunker/no_args.yaml,
+  chunk_ranking/negative_path_distance_ranker/no_args.yaml,
+  chunk_sorting/lexicographic_sorter/no_args.yaml,
+  chunk_harvesting/path_comment_harvester/standard.yaml,
+  context_postprocessing/line_length_postprocessor/10_250.yaml,
+]
