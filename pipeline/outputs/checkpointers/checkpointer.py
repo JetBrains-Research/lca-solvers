@@ -106,7 +106,7 @@ class CheckpointManager:  # aka checkpointer
     def init_metrics(self,
                      group: Literal['train_metrics', 'valid_metrics'],
                      metrics: list[MetricName],
-                     ema_alpha: float,
+                     ema_alpha: float | None = None,
                      ) -> dict[MetricName, MetricBase]:
         checkpoint_dir = self.get_checkpoint_directory()
         metrics_dict = dict()

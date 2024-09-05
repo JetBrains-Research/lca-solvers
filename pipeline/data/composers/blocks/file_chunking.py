@@ -154,3 +154,9 @@ class CodeSegmentGrainedChunker(FileChunker):
                     chunks.append(chunk)
 
         return chunks
+
+
+class CodeOnlyChunker(CodeSegmentGrainedChunker):
+    def __call__(self, *args, **kwargs) -> Sequence[Chunk]:
+        return [chunk for chunk in super().__call__(*args, **kwargs)
+                if chunk.metadata['segment_type'] == CodeSegment.CODE]
