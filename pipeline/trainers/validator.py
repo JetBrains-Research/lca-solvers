@@ -1,3 +1,4 @@
+from pipeline.model.adapters.adapter_base import AdapterBase
 from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, MetricBase
 from pipeline.trainers.trainer_base import TrainerBase
 
@@ -12,6 +13,7 @@ from transformers import PreTrainedModel
 class Validator(TrainerBase):
     def __init__(self,
                  model: PreTrainedModel,
+                 adapter: AdapterBase,
                  valid_metrics: dict[MetricName, MetricBase],
                  valid_ds: Dataset,
                  batch_size: int,
@@ -19,6 +21,7 @@ class Validator(TrainerBase):
                  prefetch_factor: int,
                  ) -> None:
         self.model = model
+        self.adapter = adapter
         self.valid_metrics = valid_metrics
         self.valid_dl = DataLoader(
             dataset=valid_ds,
@@ -44,12 +47,14 @@ class Validator(TrainerBase):
         )
 
         for batch in valid_iter:
-            (input_ids, target_ids,
-             loss_mask, completion_mask, category_ids,
-             input_attn_mask, target_attn_mask,
-             ) = (t.to(self.model.device) for t in batch.values())
+            inputs = (
+                input_ids, target_ids,
+                loss_mask, completion_mask, category_ids,
+                input_attn_mask, target_attn_mask,
+            ) = (t.to(self.model.device) for t in batch.values())
+            args, kwargs = self.adapter.get_args_kwargs(*inputs)
 
-            model_output = self.model(input_ids, attention_mask=input_attn_mask)
+            model_output = self.model(*args, **kwargs)
             loss_per_token = F.cross_entropy(
                 input=model_output.logits.flatten(0, 1),
                 target=target_ids.flatten(0, 1),
@@ -66,5 +71,5 @@ class Validator(TrainerBase):
         self.model.train(training)
         return valid_log
 
-    def train(self, *args, **kwargs) -> None:
+    def train(self, *_args, **_kwargs) -> None:
         raise NotImplementedError

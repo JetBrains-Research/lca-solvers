@@ -1,6 +1,7 @@
 from pipeline.data.composers.init import init_composer
 from pipeline.data.dataset import train_test_split, set_transform
 from pipeline.data.preprocessors.init import init_preprocessor
+from pipeline.model.adapters.init import init_adapter
 from pipeline.model.init import init_tokenizer_model
 from pipeline.outputs.checkpointers.init import init_checkpointer
 from pipeline.outputs.loggers.init import init_logger
@@ -58,9 +59,9 @@ def main(config: DictConfig) -> None:
         stream.write(argv_sh)
 
     config_choices = HydraConfig.get().runtime.choices
-    checkpointer_cls, logger_cls, composer_cls, preprocessor_cls, trainer_cls = [
+    adapter_cls, checkpointer_cls, logger_cls, composer_cls, preprocessor_cls, trainer_cls = [
         os.path.dirname(config_choices.get(cfg_group))
-        for cfg_group in ('checkpointer', 'logger', 'composer', 'preprocessor', 'trainer')
+        for cfg_group in ('adapter', 'checkpointer', 'logger', 'composer', 'preprocessor', 'trainer')
     ]
 
     checkpointer = init_checkpointer(
@@ -71,6 +72,12 @@ def main(config: DictConfig) -> None:
 
     load_from = checkpointer.get_model_subdirectory()
     tokenizer, model = init_tokenizer_model(config.model, load_from=load_from)
+
+    adapter = init_adapter(
+        cls_name=adapter_cls,
+        loaded_config=config.adapter,
+        model_name=config.model.model_name)
+    model = adapter.adapt(model)
 
     composer = init_composer(
         cls_name=composer_cls,
@@ -108,6 +115,7 @@ def main(config: DictConfig) -> None:
         tokenizer=tokenizer,
         train_ds=train_ds,
         valid_ds=valid_ds,
+        adapter=adapter,
         checkpointer=checkpointer,
         logger=logger)
     trainer.train(verbose=True)

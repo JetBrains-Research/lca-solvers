@@ -1,3 +1,4 @@
+from pipeline.model.adapters.adapter_base import AdapterBase
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.checkpointers.data_structures import Checkpoint
 from pipeline.outputs.loggers.logger_base import Log, LoggerBase
@@ -25,6 +26,7 @@ class FullFineTuningTrainer(TrainerBase):
                  train_ds: Dataset,
                  valid_ds: Dataset | None,
                  # auxiliary objects
+                 adapter: AdapterBase,
                  checkpointer: CheckpointManager,
                  logger: LoggerBase,
                  # iteration parameters
@@ -60,6 +62,7 @@ class FullFineTuningTrainer(TrainerBase):
         # main objects
         self.model = model
         self.tokenizer = tokenizer
+        self.adapter = adapter
         self.checkpointer = checkpointer
         self.logger = logger
 
@@ -190,12 +193,14 @@ class FullFineTuningTrainer(TrainerBase):
         )
 
         for micro_batch in valid_iter:
-            (input_ids, target_ids,
-             loss_mask, completion_mask, category_ids,
-             input_attn_mask, target_attn_mask,
-             ) = (t.to(self.model.device) for t in micro_batch.values())
+            inputs = (
+                input_ids, target_ids,
+                loss_mask, completion_mask, category_ids,
+                input_attn_mask, target_attn_mask,
+            ) = (t.to(self.model.device) for t in micro_batch.values())
+            args, kwargs = self.adapter.get_args_kwargs(*inputs)
 
-            model_output = self.model(input_ids, attention_mask=input_attn_mask)
+            model_output = self.model(*args, **kwargs)
             loss_per_token = F.cross_entropy(
                 input=model_output.logits.flatten(0, 1),
                 target=target_ids.flatten(0, 1),
@@ -244,12 +249,14 @@ class FullFineTuningTrainer(TrainerBase):
                 param_group['lr'] = learning_rate
 
             for _ in range(self.gradient_accumulation_steps):
-                (input_ids, target_ids,
-                 loss_mask, completion_mask, category_ids,
-                 input_attn_mask, target_attn_mask,
-                 ) = (t.to(self.model.device) for t in next(train_iter).values())
+                inputs = (
+                    input_ids, target_ids,
+                    loss_mask, completion_mask, category_ids,
+                    input_attn_mask, target_attn_mask,
+                ) = (t.to(self.model.device) for t in next(train_iter).values())
+                args, kwargs = self.adapter.get_args_kwargs(*inputs)
 
-                model_output = self.model(input_ids, attention_mask=input_attn_mask)
+                model_output = self.model(*args, **kwargs)
                 loss_per_token = F.cross_entropy(
                     input=model_output.logits.flatten(0, 1),
                     target=target_ids.flatten(0, 1),

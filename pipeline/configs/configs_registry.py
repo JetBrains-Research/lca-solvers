@@ -1,3 +1,4 @@
+from pipeline.configs.adapter_config import AdapterConfig
 from pipeline.configs.checkpointer_config import (
     CheckpointManagerConfig,
     TopKCheckpointManagerConfig,
@@ -12,14 +13,18 @@ from pipeline.configs.preprocessor_config import PreprocessorConfig
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 CONFIGS_REGISTRY = {
+    # adapters
+    'identity_adapter': AdapterConfig,
+    'prefix_unmask_adapter': AdapterConfig,
+
     # checkpointers
     'checkpointer': CheckpointManagerConfig,
     'top_k_checkpointer': TopKCheckpointManagerConfig,
 
     # loggers
-    'dummy': ConfigBase,
-    'local': LocalLoggerConfig,
-    'wandb': WandbLoggerConfig,
+    'dummy_logger': ConfigBase,
+    'local_logger': LocalLoggerConfig,
+    'wandb_logger': WandbLoggerConfig,
 
     # composers
     'chained_composer': ChainedComposerConfig,
