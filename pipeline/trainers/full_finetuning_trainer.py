@@ -197,7 +197,7 @@ class FullFineTuningTrainer(TrainerBase):
                 input_ids, target_ids,
                 loss_mask, completion_mask, category_ids,
                 input_attn_mask, target_attn_mask,
-            ) = (t.to(self.model.device) for t in micro_batch.values())
+            ) = tuple(t.to(self.model.device) for t in micro_batch.values())
             args, kwargs = self.adapter.get_args_kwargs(*inputs)
 
             model_output = self.model(*args, **kwargs)
@@ -253,7 +253,7 @@ class FullFineTuningTrainer(TrainerBase):
                     input_ids, target_ids,
                     loss_mask, completion_mask, category_ids,
                     input_attn_mask, target_attn_mask,
-                ) = (t.to(self.model.device) for t in next(train_iter).values())
+                ) = tuple(t.to(self.model.device) for t in next(train_iter).values())
                 args, kwargs = self.adapter.get_args_kwargs(*inputs)
 
                 model_output = self.model(*args, **kwargs)

@@ -1,4 +1,5 @@
 from pipeline.configs.config_base import ConfigBase
+from pipeline.model.adapters.adapter_base import AdapterBase
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.loggers.logger_base import LoggerBase
 from pipeline.outputs.metrics.metric_base import MetricName
@@ -18,6 +19,7 @@ class FullFineTuningTrainerConfig(ConfigBase):
     valid_ds: Dataset | None
 
     # Auxiliary objects
+    adapter: AdapterBase
     checkpointer: CheckpointManager
     logger: LoggerBase
 

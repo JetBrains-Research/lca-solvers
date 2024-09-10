@@ -5,7 +5,7 @@ defaults:
   - checkpointer: top_k_checkpointer/top_3
   - composer: chained_composer/standard
   - dataset: train_A100_server
-  - logger: wandb/wandb
+  - logger: wandb_logger/wandb
   - model: dseek1p3
   - preprocessor: completion_loss_preprocessor/full_completion_loss_16k
   - split: '256_5'
