@@ -126,6 +126,7 @@ def main() -> None:
         context_tokens=12288,
         loss_ratio=1,
         num_chars_per_token=6,
+        use_sep_token=False,
         padding=True,
         verbose=False)
     completion_loss_preprocessor = CompletionLossPreprocessor(**preprocessor_kwargs)

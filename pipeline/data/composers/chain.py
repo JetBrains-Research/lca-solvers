@@ -42,7 +42,21 @@ class ComposerBlock(ABC, ReprMixin):
         raise NotImplementedError
 
 
-class ComposerChain:
+class UnsafeComposerChain:
+    def __init__(self, *blocks: ComposerBlock) -> None:
+        self.blocks = blocks
+
+    def __call__(self, datapoint: Datapoint) -> Any:
+        x = [
+            File(content=cnt, metadata={'filename': fn})
+            for fn, cnt in zip(*datapoint.repo_snapshot.values())
+        ]
+        for block in self.blocks:
+            x = block(x, datapoint)
+        return x
+
+
+class ComposerChain(UnsafeComposerChain):
     def __init__(self, *blocks: ComposerBlock) -> None:
         if not blocks:
             raise ValueError('ComposerChain instance must contain at least one element.')
@@ -54,13 +68,4 @@ class ComposerChain:
         for block, next_block in zip(blocks[:-1], blocks[1:]):
             block.check_next_block(next_block)
 
-        self.blocks = blocks
-
-    def __call__(self, datapoint: Datapoint) -> str:
-        x = [
-            File(content=cnt, metadata={'filename': fn})
-            for fn, cnt in zip(*datapoint.repo_snapshot.values())
-        ]
-        for block in self.blocks:
-            x = block(x, datapoint)
-        return x
+        super().__init__(*blocks)

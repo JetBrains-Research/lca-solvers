@@ -25,10 +25,16 @@ class AttentionImplementation(str, Enum):
 
 
 def init_tokenizer(config: ModelConfig) -> PreTrainedTokenizerBase:
-    return AutoTokenizer.from_pretrained(
+    tokenizer = AutoTokenizer.from_pretrained(
         pretrained_model_name_or_path=config.tokenizer_name,
         trust_remote_code=config.trust_remote_code,
     )
+
+    tokenizer.padding_side = 'right'
+    if tokenizer.sep_token is None:
+        tokenizer.add_special_tokens({'sep_token': '<|SEP|>'})
+
+    return tokenizer
 
 
 def get_optimal_attn(model_name: str, device: torch.device, dtype: torch.dtype) -> AttentionImplementation:

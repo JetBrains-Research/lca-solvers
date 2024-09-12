@@ -12,5 +12,6 @@ class PreprocessorConfig(ConfigBase):
     context_tokens: int | float
     loss_ratio: float
     num_chars_per_token: int
+    use_sep_token: bool
     padding: bool
     verbose: bool = True

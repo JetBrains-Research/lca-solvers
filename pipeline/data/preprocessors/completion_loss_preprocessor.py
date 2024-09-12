@@ -18,6 +18,7 @@ class CompletionLossPreprocessor(PreprocessorBase):
                  context_tokens: int | float,
                  loss_ratio: float,
                  num_chars_per_token: int,
+                 use_sep_token: bool,  # appended to the context
                  padding: bool,
                  verbose: bool,
                  ) -> None:
@@ -41,6 +42,7 @@ class CompletionLossPreprocessor(PreprocessorBase):
 
         self.loss_ratio = loss_ratio
         self.num_chars_per_token = num_chars_per_token
+        self.use_sep_token = use_sep_token  # TODO: adjust len
         self.padding = padding
         self.verbose = verbose
 
@@ -208,6 +210,8 @@ class CompletionLossPreprocessor(PreprocessorBase):
 
             prompt = [self.tokenizer.bos_token_id] + prompt[-prompt_len:]
             context = context[-context_len:]
+            if self.use_sep_token and context:
+                context = context[1:] + [self.tokenizer.sep_token_id]
             completion = completion[:completion_len]
 
             tokenized_completions.offset_mapping[sample_idx] = \
@@ -216,7 +220,6 @@ class CompletionLossPreprocessor(PreprocessorBase):
 
             tokenized_batch.append(prompt + context + completion)
 
-        self.tokenizer.padding_side = 'right'
         padded_batch = self.tokenizer.pad(
             encoded_inputs={'input_ids': tokenized_batch},
             padding='longest',
