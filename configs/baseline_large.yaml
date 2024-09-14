@@ -1,0 +1,4 @@
+dataset: large_context
+model: deepseek-ai/deepseek-coder-1.3b-base
+bos: head_blocks_only
+num_gen_layers: null
