@@ -1,2 +1,0 @@
-class CacheEncoderMixin:
-    pass  # TODO

@@ -70,7 +70,10 @@ def create_model_reference(model: nn.Module) -> nn.Module:
     return model_ref
 
 
-def split_model(model: nn.Module, num_gen_layers: int) -> tuple[nn.Module, nn.Module]:
+def split_model(model: nn.Module, num_gen_layers: int | None) -> tuple[nn.Module | None, nn.Module]:
+    if num_gen_layers is None:
+        return None, model
+
     encoder = create_model_reference(model.model)
     encoder.layers = encoder.layers[:-num_gen_layers]
     encoder.norm = nn.Identity()
