@@ -2,6 +2,7 @@ from cache_study.model import split_model
 from composers.chain.chain import Chunk, UnsafeComposerChain
 from composers.data.datapoint import Datapoint
 
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Generator, Iterator, Literal
@@ -22,6 +23,8 @@ class BOSUsage(str, Enum):
 @dataclass
 class PipelineOutput:
     OOM: Literal['no', 'encoder', 'generator'] = 'no'
+    encoding_time: float = 0
+    generation_time: float = 0
     num_tokens: int = 0
     block_names: list[str] = field(default_factory=list)
     cross_entropy: list[float] = field(default_factory=list)
@@ -91,7 +94,7 @@ class Pipeline:
     def encode(self,
                head_blocks: list[torch.Tensor],
                tail_blocks: list[torch.Tensor],
-               ) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
+               ) -> Iterator[tuple[torch.Tensor, torch.Tensor] | None]:
         prev_head_block = None
 
         for head_block, tail_block in zip(head_blocks, tail_blocks):
@@ -109,7 +112,7 @@ class Pipeline:
                     tail_block = tail_block.squeeze(0)
 
             except torch.cuda.OutOfMemoryError:
-                yield None, None
+                yield None
                 break
 
             if self.bos_usage == BOSUsage.TAIL_SEAM:
@@ -143,21 +146,27 @@ class Pipeline:
         output = PipelineOutput()
 
         block_names, *blocks, target_ids = self.preprocess(datapoint)
-        blocks = (zip if self.encoder is None else self.encode)(*blocks)
+        blocks_encoder = (zip if self.encoder is None else self.encode)(*blocks)
         logits_generator = self.produce_logits(); next(logits_generator)
 
-        for block_name, (head_block, tail_block) in zip(block_names, blocks):
+        for block_name in block_names:
             torch.cuda.empty_cache()
 
-            if head_block is None:
+            start = time.time()
+            encoded_blocks = next(blocks_encoder)
+            if encoded_blocks is None:
                 output.OOM = 'encoder'
-                return output
+                break
+            else:
+                output.encoding_time += time.time() - start
 
-            logits = logits_generator.send((head_block, tail_block))
-
+            start = time.time()
+            logits = logits_generator.send(encoded_blocks)
             if logits is None:
                 output.OOM = 'generator'
-                return output
+                break
+            else:
+                output.generation_time = max(output.generation_time, time.time() - start)
 
             output.num_tokens = logits.shape[0]
             logits = logits[-len(target_ids):]
