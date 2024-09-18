@@ -1,7 +1,7 @@
 run_name: ???
 
 defaults:
-  - adapter: identity_adapter/no_args
+  - adapter: identity_adapter/all_params
   - checkpointer: top_k_checkpointer/top_3
   - composer: chained_composer/standard
   - dataset: train_A100_server

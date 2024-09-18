@@ -1,0 +1,1 @@
+params_pattern: model\.layers\.\d+\.self_attn\.(q_proj|k_proj)\.weight

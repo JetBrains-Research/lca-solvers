@@ -163,8 +163,15 @@ class FullFineTuningTrainer(TrainerBase):
                     beta_2: float,
                     weight_decay: float,
                     ) -> torch.optim.AdamW:
-        decay_params = [p for p in self.model.parameters() if p.dim() >= 2]
-        no_decay_params = [p for p in self.model.parameters() if p.dim() < 2]
+        decay_params = list()
+        no_decay_params = list()
+
+        for params in self.adapter.get_trainable_parameters(self.model):
+            if params.dim() >= 2:
+                decay_params.append(params)
+            else:
+                no_decay_params.append(params)
+
         params = [
             {'params': decay_params, 'weight_decay': weight_decay},
             {'params': no_decay_params, 'weight_decay': 0},
@@ -277,7 +284,10 @@ class FullFineTuningTrainer(TrainerBase):
 
             if self.max_grad_norm != 0:
                 self.grad_scaler.unscale_(self.optimizer)
-                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+                grad_norm = torch.nn.utils.clip_grad_norm_(
+                    parameters=self.adapter.get_trainable_parameters(self.model),
+                    max_norm=self.max_grad_norm,
+                )
 
             self.grad_scaler.step(self.optimizer)
             self.grad_scaler.update()

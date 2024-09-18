@@ -42,7 +42,7 @@ class CompletionLossPreprocessor(PreprocessorBase):
 
         self.loss_ratio = loss_ratio
         self.num_chars_per_token = num_chars_per_token
-        self.use_sep_token = use_sep_token  # TODO: adjust len
+        self.use_sep_token = use_sep_token
         self.padding = padding
         self.verbose = verbose
 

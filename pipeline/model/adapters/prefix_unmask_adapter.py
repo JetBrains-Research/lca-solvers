@@ -138,10 +138,9 @@ class PrefixUnmaskAdapter(AdapterBase):
                         ) -> tuple[tuple[Any], dict[str, Any]]:
         if input_ids.shape[0] != 1:
             raise ValueError('This adapter only accepts batch_size = 1.')
-        assert 0 not in input_attn_mask  # TODO: remove me later (adjust the following lines accordingly)
 
-        args = (input_ids[input_attn_mask.bool()].unsqueeze(0),)
-        kwargs = dict(attention_mask=torch.ones_like(args[0]))
+        args = (input_ids,)
+        kwargs = dict(attention_mask=input_attn_mask)
         PrefixUnmaskAttention.prefix_len = (~loss_mask & target_attn_mask).sum().item() + 1
 
         return args, kwargs
