@@ -1,4 +1,7 @@
-from pipeline.configs.adapter_config import AdapterConfig
+from pipeline.configs.adapter_config import (
+    AdapterConfig,
+    SplitAdapterConfig,
+)
 from pipeline.configs.checkpointer_config import (
     CheckpointManagerConfig,
     TopKCheckpointManagerConfig,
@@ -16,6 +19,7 @@ CONFIGS_REGISTRY = {
     # adapters
     'identity_adapter': AdapterConfig,
     'prefix_unmask_adapter': AdapterConfig,
+    'split_adapter': SplitAdapterConfig,
 
     # checkpointers
     'checkpointer': CheckpointManagerConfig,

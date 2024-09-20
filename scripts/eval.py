@@ -9,6 +9,7 @@ from pipeline.data.composers.blocks.chunk_harvesting import *
 from pipeline.data.composers.chained_composer import ChainedComposer
 from pipeline.data.preprocessors.completion_loss_preprocessor import CompletionLossPreprocessor
 from pipeline.data.preprocessors.file_level_preprocessor import FileLevelPreprocessor
+from pipeline.model.adapters.identity_adapter import IdentityAdapter
 from pipeline.model.init import init_tokenizer, init_model
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.checkpointers.data_structures import LoadingMode
@@ -18,6 +19,7 @@ import jsonlines
 from datasets import load_dataset
 
 RANDOM_SEED = 1337
+MODEL_NAME = 'deepseek-ai/deepseek-coder-1.3b-base'
 RUNS = {
     'AbsoluteCalls_FullFT_DeepSeekCoder1p3Base_HP001' : 'Absolute Calls with Path Distance sorting',
     'FileLevel_FullFT_DeepSeekCoder1p3Base_HP001' : 'File-Level Completion',
@@ -113,12 +115,13 @@ def main() -> None:
     checkpointer.init_from = LoadingMode.BEST
 
     model_config = ModelConfig(
-        tokenizer_name='deepseek-ai/deepseek-coder-1.3b-base',
-        model_name='deepseek-ai/deepseek-coder-1.3b-base',
+        tokenizer_name=MODEL_NAME,
+        model_name=MODEL_NAME,
         trust_remote_code=True,
         load_from=...,
         compile=False)
     tokenizer = init_tokenizer(model_config)
+    adapter = IdentityAdapter(MODEL_NAME, params_pattern=None)
 
     preprocessor_kwargs = dict(
         tokenizer=tokenizer,
@@ -159,6 +162,7 @@ def main() -> None:
 
                 validator = Validator(
                     model=model,
+                    adapter=adapter,
                     valid_metrics=valid_metrics,
                     valid_ds=dataset,
                     batch_size=1,

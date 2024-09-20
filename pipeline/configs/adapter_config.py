@@ -7,3 +7,8 @@ from dataclasses import dataclass
 class AdapterConfig(ConfigBase):
     model_name: str
     params_pattern: str | None  # None means that all parameters receive updates
+
+
+@dataclass
+class SplitAdapterConfig(AdapterConfig):
+    num_gen_layers: int

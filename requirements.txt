@@ -11,3 +11,4 @@ tree-sitter==0.22.3
 jsonlines==4.0.0
 flash-attn==2.5.9.post1
 einops==0.8.0
+matplotlib==3.9.0
