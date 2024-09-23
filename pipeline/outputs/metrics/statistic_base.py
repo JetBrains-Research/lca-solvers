@@ -17,7 +17,7 @@ class StatisticBase(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def batch_commit(self) -> StatisticValue:
+    def batch_commit(self, **kwargs) -> StatisticValue:
         raise NotImplementedError
 
 
@@ -31,8 +31,8 @@ def ema_factory(statistic_cls: Type[StatisticBase]) -> Type[StatisticBase]:
         def reinit(self, ema_state: float | None) -> None:
             self.ema_state = ema_state
 
-        def batch_commit(self) -> StatisticValue:
-            batch_metric = super().batch_commit()
+        def batch_commit(self, **kwargs) -> StatisticValue:
+            batch_metric = super().batch_commit(**kwargs)
             if self.ema_state is None:
                 self.ema_state = batch_metric
             else:
@@ -50,7 +50,7 @@ def lazy_statistic_factory(statistic_name: str) -> Type[StatisticBase]:
         def micro_batch_update(self, **kwargs) -> None:
             self.value = kwargs.get(statistic_name)
 
-        def batch_commit(self) -> StatisticValue:
+        def batch_commit(self, **_kwargs) -> StatisticValue:
             batch_statistic = self.value
             self.value = None
             return batch_statistic

@@ -26,7 +26,7 @@ class CrossEntropy(MetricBase):
 
         self.num_tokens += num_tokens_update
 
-    def batch_commit(self) -> MetricValue:
+    def batch_commit(self, **_kwargs) -> MetricValue:
         batch_metric = float('nan') if not self.num_tokens else self.mean_loss
         self.mean_loss = 0
         self.num_tokens = 0

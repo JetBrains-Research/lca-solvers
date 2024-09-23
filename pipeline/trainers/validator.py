@@ -66,7 +66,9 @@ class Validator(TrainerBase):
             [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
             del locals_copy
 
-        valid_log = {name: metric.batch_commit() for name, metric in self.valid_metrics.items()}
+        locals_copy = locals().copy()
+        locals_copy['trainer'] = locals_copy.pop('self')
+        valid_log = {name: metric.batch_commit(**locals_copy) for name, metric in self.valid_metrics.items()}
 
         self.model.train(training)
         return valid_log

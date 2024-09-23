@@ -1,7 +1,9 @@
 from pipeline.model.adapters.adapter_base import AdapterBase
+from pipeline.model.init import AttentionImplementation
 
 import re
 from typing import Any
+from typing_extensions import Self
 
 import torch
 import torch.nn as nn
@@ -12,18 +14,22 @@ from transformers.models.llama.modeling_llama import LlamaFlashAttention2
 class SmoothPrefixUnmaskAttention(LlamaFlashAttention2):
     prefix_len = None
 
-    def __init__(self, is_last: bool, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.is_last = is_last
         self.past_weight = None
         self.init_past_weight()
 
     def init_past_weight(self) -> None:
-        # TODO: add to logs
-        params = next(self.parameters())
         self.past_weight = nn.Parameter(torch.ones(
             1, 1, self.config.num_attention_heads, 1,
-            dtype=params.dtype, device=params.device))
+            dtype=torch.float32,  # the precision of bfloat16 is not sufficient
+            device=next(self.parameters()).device,
+        ))
+
+    def to(self, *args, **kwargs) -> Self:
+        super(LlamaFlashAttention2, self).to(*args, **kwargs)
+        self.past_weight.data = self.past_weight.data.to(torch.float32)
+        return self
 
     def _flash_attention_forward(self,
                                  query_states: torch.Tensor,
@@ -53,10 +59,11 @@ class SmoothPrefixUnmaskAttention(LlamaFlashAttention2):
             causal=True,
         ).flip(dims=(1,))
 
+        past_weight = self.past_weight.to(output.dtype)
         # a bit more precise than "future_emb + past_weight * (past_emb - future_emb)"
-        output[:, :self.prefix_len] = self.past_weight * past_emb + (1 - self.past_weight) * future_emb
+        output[:, :self.prefix_len] = past_weight * past_emb + (1 - past_weight) * future_emb
 
-        if self.is_last:
+        if self.layer_idx + 1 == self.config.num_hidden_layers:
             SmoothPrefixUnmaskAttention.prefix_len = None
 
         return output
@@ -71,7 +78,7 @@ class SmoothPrefixUnmaskAdapter(AdapterBase):
         no_decay_params = list()
 
         for name, params in model.named_parameters():
-            if not re.search(self.params_pattern, name):
+            if self.params_pattern is not None and not re.search(self.params_pattern, name):
                 continue  # not trainable
 
             if name.endswith('past_weight'):
@@ -89,8 +96,8 @@ class SmoothPrefixUnmaskAdapter(AdapterBase):
 
         @torch.inference_mode
         def proj_onto_budget_set(*_args, **_kwargs) -> None:
-            for weight in past_weights:
-                weight.clamp_(0, 1)
+            for past_weight in past_weights:
+                past_weight.clamp_(0, 1)
 
         optimizer.register_step_post_hook(proj_onto_budget_set)
         return optimizer
@@ -124,6 +131,8 @@ class SmoothPrefixUnmaskAdapter(AdapterBase):
         for i, decoder_layer in enumerate(model.model.layers):
             decoder_layer.self_attn.__class__ = SmoothPrefixUnmaskAttention
             decoder_layer.self_attn.init_past_weight()
-            decoder_layer.self_attn.is_last = (i + 1 == model.config.num_hidden_layers)
+
+            if decoder_layer.self_attn.layer_idx is None:
+                decoder_layer.self_attn.layer_idx = i
 
         return model

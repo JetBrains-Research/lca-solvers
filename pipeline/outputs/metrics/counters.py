@@ -32,5 +32,5 @@ class EpochCounter(StatisticBase):
             self.samples += input_ids.shape[0]
             self.ds_length = len(trainer.train_dl.dataset)
 
-    def batch_commit(self) -> StatisticValue:
+    def batch_commit(self, **_kwargs) -> StatisticValue:
         return self.init_epoch + self.samples / self.ds_length

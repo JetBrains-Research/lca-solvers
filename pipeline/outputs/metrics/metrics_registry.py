@@ -1,3 +1,4 @@
+from pipeline.outputs.metrics.counters import EpochCounter
 from pipeline.outputs.metrics.cross_entropy import CrossEntropy
 from pipeline.outputs.metrics.metric_base import (
     loss_based_metric_factory,
@@ -7,8 +8,8 @@ from pipeline.outputs.metrics.metric_base import (
     full_metric_factory,
     categorized_metric_factory,
 )
+from pipeline.outputs.metrics.model_statistics import PastWeights
 from pipeline.outputs.metrics.statistic_base import ema_factory, lazy_statistic_factory
-from pipeline.outputs.metrics.counters import EpochCounter
 
 METRICS_REGISTRY = {
     'cross_entropy': loss_based_metric_factory(CrossEntropy),
@@ -28,6 +29,7 @@ METRICS_REGISTRY = {
     # in training only
     'epoch': EpochCounter,
     'learning_rate': lazy_statistic_factory('learning_rate'),
+    'past_weights': PastWeights,  # compatible with SmoothPrefixUnmaskAdapter only
 }
 METRICS_REGISTRY.update({  # useless due to W&B native support :(
     f'ema_{name}': ema_factory(cls) for name, cls in METRICS_REGISTRY.items()

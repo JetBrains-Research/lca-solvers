@@ -58,9 +58,8 @@ def calc_attn_weights(query_states: torch.Tensor,
 class PrefixUnmaskAttention(LlamaFlashAttention2):
     prefix_len = None
 
-    def __init__(self, is_last: bool, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.is_last = is_last
         self.output_attentions = False
         self.attn_weights = None
         # does not affect the calculations, only the returned weight type
@@ -107,7 +106,7 @@ class PrefixUnmaskAttention(LlamaFlashAttention2):
                 causal=True),
         ), dim=1)
 
-        if self.is_last:
+        if self.layer_idx + 1 == self.config.num_hidden_layers:
             PrefixUnmaskAttention.prefix_len = None
 
         return output
@@ -142,7 +141,9 @@ class PrefixUnmaskAdapter(AdapterBase):
 
         for i, decoder_layer in enumerate(model.model.layers):
             decoder_layer.self_attn.__class__ = PrefixUnmaskAttention
-            decoder_layer.self_attn.is_last = (i + 1 == model.config.num_hidden_layers)
+
+            if decoder_layer.self_attn.layer_idx is None:
+                decoder_layer.self_attn.layer_idx = i
 
         return model
 
