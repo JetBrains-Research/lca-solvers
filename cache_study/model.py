@@ -58,6 +58,7 @@ def init_tokenizer_model(model_name: str) -> tuple[PreTrainedTokenizerBase, PreT
         device_map=device,
         torch_dtype=dtype,
         attn_implementation=attn_implementation,
+        use_cache=False,
     ).eval().requires_grad_(False)
 
     return tokenizer, model

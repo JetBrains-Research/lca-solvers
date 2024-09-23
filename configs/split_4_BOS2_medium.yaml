@@ -1,4 +1,5 @@
 dataset: medium_context
 model: deepseek-ai/deepseek-coder-1.3b-base
 bos: head_blocks_only
+max_num_blocks: null
 num_gen_layers: 4

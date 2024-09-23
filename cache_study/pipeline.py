@@ -14,10 +14,10 @@ from transformers import PreTrainedTokenizerBase
 
 
 class BOSUsage(str, Enum):
-    DISABLED = 'disabled'
-    IN_EACH_BLOCK = 'in_each_block'
-    HEAD_BLOCKS_ONLY = 'head_blocks_only'
-    TAIL_SEAM = 'tail_seam'
+    DISABLED = 'disabled'                  # BOS0
+    IN_EACH_BLOCK = 'in_each_block'        # BOS1
+    HEAD_BLOCKS_ONLY = 'head_blocks_only'  # BOS2
+    TAIL_SEAM = 'tail_seam'                # BOS3
 
 
 @dataclass
@@ -33,6 +33,7 @@ class PipelineOutput:
 class Pipeline:
     def __init__(self,
                  composer: UnsafeComposerChain,
+                 max_num_blocks: int | None,
                  tokenizer: PreTrainedTokenizerBase,
                  bos_usage: BOSUsage,
                  full_model: nn.Module,
@@ -42,6 +43,7 @@ class Pipeline:
             raise ValueError('Tail seaming is only possible for TrialPipeline.')
 
         self.composer = composer
+        self.max_num_blocks = max_num_blocks
         self.tokenizer = tokenizer
         self.bos_usage = bos_usage
         self.encoder, self.generator = split_model(full_model, num_gen_layers)
@@ -53,7 +55,6 @@ class Pipeline:
     def preprocess(self,
                    datapoint: dict[str, Any],
                    batch_size: int = 128,
-                   max_num_blocks: int | None = None,
                    ) -> tuple[list[str], list[torch.Tensor], list[torch.Tensor], torch.Tensor]:
         datapoint = Datapoint(**datapoint)
 
@@ -65,8 +66,9 @@ class Pipeline:
             block_names.append(file_ref.metadata['filename'])
             block_sequence.append(block.content.rstrip('\n') + '\n\n')
 
-        if max_num_blocks is not None:
-            block_sequence = block_sequence[:max_num_blocks]
+        if self.max_num_blocks is not None:
+            block_names = block_names[:self.max_num_blocks]
+            block_sequence = block_sequence[:self.max_num_blocks]
 
         head_blocks = list()
         tail_blocks = list()
@@ -98,18 +100,18 @@ class Pipeline:
         prev_head_block = None
 
         for head_block, tail_block in zip(head_blocks, tail_blocks):
-            if self.bos_usage == BOSUsage.TAIL_SEAM:
-                assert head_block[0] == 32013  # TODO: remove me later
-
             try:
                 head_block = head_block.unsqueeze(0)
                 head_block = self.encoder(head_block).last_hidden_state
                 head_block = head_block.squeeze(0)
 
                 if tail_block.numel():
-                    tail_block = tail_block.unsqueeze(0)
-                    tail_block = prev_head_block or self.encoder(tail_block).last_hidden_state
-                    tail_block = tail_block.squeeze(0)
+                    if prev_head_block is None:
+                        tail_block = tail_block.unsqueeze(0)
+                        tail_block = self.encoder(tail_block).last_hidden_state
+                        tail_block = tail_block.squeeze(0)
+                    else:
+                        tail_block = prev_head_block
 
             except torch.cuda.OutOfMemoryError:
                 yield None

@@ -41,6 +41,7 @@ def main(config: DictConfig) -> None:
 
     pipeline = Pipeline(
         composer=COMPOSER,
+        max_num_blocks=config.max_num_blocks,
         tokenizer=tokenizer,
         bos_usage=BOSUsage(config.bos),
         full_model=model,
