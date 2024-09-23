@@ -116,6 +116,7 @@ def main() -> None:
     model = init_model(model_config)
     adapter = SplitAdapter(
         num_gen_layers=num_gen_layers,
+        max_seq_len=max(num_blocks) * max(block_sizes) + 42,
         model_name=model_name,
         params_pattern='^generator.*')
     model = adapter.adapt(model)

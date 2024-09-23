@@ -97,7 +97,7 @@ class CheckpointManager:  # aka checkpointer
         else:
             return None
 
-    def init_optimizer(self, optimizer: torch.optim.AdamW) -> None:
+    def load_optimizer_state(self, optimizer: torch.optim.AdamW) -> None:
         checkpoint_dir = self.get_checkpoint_directory()
         if checkpoint_dir is not None:
             optim_file = os.path.join(self.directory, checkpoint_dir, self._optim_state_filename)

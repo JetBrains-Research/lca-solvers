@@ -15,3 +15,15 @@ class BatchComposedDatapoint(TypedDict):
     composed_context: list[str]
     composed_completion: list[str]
     completion_lines: list[CompletionLines]
+
+
+class ComposedBlockDatapoint(TypedDict):
+    context_blocks: list[str]
+    completion_block: str
+    completion_lines: CompletionLines
+
+
+class BatchComposedBlockDatapoint(TypedDict):
+    context_blocks: list[list[str]]
+    completion_block: list[str]
+    completion_lines: list[CompletionLines]

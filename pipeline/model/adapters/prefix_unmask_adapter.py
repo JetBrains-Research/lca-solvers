@@ -55,25 +55,6 @@ def calc_attn_weights(query_states: torch.Tensor,
     return attention_weights
 
 
-def prefix_unmask_attention(query_states: torch.Tensor,
-                            key_states: torch.Tensor,
-                            value_states: torch.Tensor,
-                            prefix_len: int,
-                            ) -> torch.Tensor:
-    return torch.concat((
-        flash_attn_func(
-            q=query_states[:, :prefix_len],
-            k=key_states[:, :prefix_len],
-            v=value_states[:, :prefix_len],
-            causal=False),
-        flash_attn_func(
-            q=query_states[:, prefix_len:],
-            k=key_states,
-            v=value_states,
-            causal=True),
-    ), dim=1)
-
-
 class PrefixUnmaskAttention(LlamaFlashAttention2):
     prefix_len = None
 
@@ -113,12 +94,18 @@ class PrefixUnmaskAttention(LlamaFlashAttention2):
         else:
             self.attn_weights = None
 
-        output = prefix_unmask_attention(
-            query_states=query_states,
-            key_states=key_states,
-            value_states=value_states,
-            prefix_len=self.prefix_len,
-        )
+        output = torch.concat((
+            flash_attn_func(
+                q=query_states[:, :self.prefix_len],
+                k=key_states[:, :self.prefix_len],
+                v=value_states[:, :self.prefix_len],
+                causal=False),
+            flash_attn_func(
+                q=query_states[:, self.prefix_len:],
+                k=key_states,
+                v=value_states,
+                causal=True),
+        ), dim=1)
 
         if self.is_last:
             PrefixUnmaskAttention.prefix_len = None

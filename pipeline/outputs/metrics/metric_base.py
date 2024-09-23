@@ -40,21 +40,21 @@ def detached_metric_factory(metric_cls: Type[MetricBase]) -> Type[MetricBase]:
 
 
 def completion_metric_factory(metric_cls: Type[MetricBase]) -> Type[MetricBase]:
-    class FullMetric(metric_cls, ABC):
+    class CompletionMetric(metric_cls, ABC):
         def micro_batch_update(self, **kwargs) -> None:
             kwargs['mask'] = kwargs['completion_mask']
             return super().micro_batch_update(**kwargs)
 
-    return FullMetric
+    return CompletionMetric
 
 
 def context_metric_factory(metric_cls: Type[MetricBase]) -> Type[MetricBase]:
-    class FullMetric(metric_cls, ABC):
+    class ContextMetric(metric_cls, ABC):
         def micro_batch_update(self, **kwargs) -> None:
             kwargs['mask'] = ~kwargs['completion_mask'] & kwargs['target_attn_mask']
             return super().micro_batch_update(**kwargs)
 
-    return FullMetric
+    return ContextMetric
 
 
 def full_metric_factory(metric_cls: Type[MetricBase]) -> Type[MetricBase]:

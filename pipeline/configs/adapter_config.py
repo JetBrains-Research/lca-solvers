@@ -12,3 +12,4 @@ class AdapterConfig(ConfigBase):
 @dataclass
 class SplitAdapterConfig(AdapterConfig):
     num_gen_layers: int
+    max_seq_len: int

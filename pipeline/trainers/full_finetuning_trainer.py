@@ -133,7 +133,12 @@ class FullFineTuningTrainer(TrainerBase):
         )
 
         # optimizer initialization
-        self.optimizer = self._init_adamw(learning_rate, beta_1, beta_2, weight_decay)
+        self.optimizer = self.adapter.init_optimizer(
+            self.model, lr=learning_rate,
+            betas=(beta_1, beta_2),
+            weight_decay=weight_decay,
+            fused=self.is_on_cuda)
+        self.checkpointer.load_optimizer_state(self.optimizer)
 
         # gradient utilities
         self.grad_scaler = torch.cuda.amp.GradScaler(enabled=(model.dtype == torch.float16))
@@ -156,35 +161,6 @@ class FullFineTuningTrainer(TrainerBase):
         # metrics
         self.train_metrics = self.checkpointer.init_metrics('train_metrics', train_metrics, train_ema_alpha)
         self.valid_metrics = self.checkpointer.init_metrics('valid_metrics', valid_metrics, valid_ema_alpha)
-
-    def _init_adamw(self,
-                    learning_rate: float,
-                    beta_1: float,
-                    beta_2: float,
-                    weight_decay: float,
-                    ) -> torch.optim.AdamW:
-        decay_params = list()
-        no_decay_params = list()
-
-        for params in self.adapter.get_trainable_parameters(self.model):
-            if params.dim() >= 2:
-                decay_params.append(params)
-            else:
-                no_decay_params.append(params)
-
-        params = [
-            {'params': decay_params, 'weight_decay': weight_decay},
-            {'params': no_decay_params, 'weight_decay': 0},
-        ]
-
-        optimizer = torch.optim.AdamW(
-            params=params,
-            lr=learning_rate,
-            betas=(beta_1, beta_2),
-            fused=self.is_on_cuda)
-        self.checkpointer.init_optimizer(optimizer)
-
-        return optimizer
 
     @torch.inference_mode
     def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:

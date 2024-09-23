@@ -23,6 +23,23 @@ class AdapterBase(ABC):
             if re.search(self.params_pattern, name)
         ] if self.params_pattern is not None else model.parameters()
 
+    def init_optimizer(self, model: nn.Module, **optim_kwargs) -> torch.optim.AdamW:
+        weight_decay = optim_kwargs.pop('weight_decay', 0)
+
+        decay_params = list()
+        no_decay_params = list()
+
+        for params in self.get_trainable_parameters(model):
+            if params.dim() >= 2:
+                decay_params.append(params)
+            else:
+                no_decay_params.append(params)
+
+        return torch.optim.AdamW(params=[
+            {'name': 'decay_params', 'params': decay_params, 'weight_decay': weight_decay},
+            {'name': 'no_decay_params', 'params': no_decay_params, 'weight_decay': 0},
+        ], **optim_kwargs)
+
     @abstractmethod
     def get_args_kwargs(self,
                         input_ids: torch.Tensor,

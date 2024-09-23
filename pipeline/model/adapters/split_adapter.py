@@ -38,10 +38,16 @@ def split_model(model: nn.Module, num_gen_layers: int | None) -> tuple[nn.Module
 
 
 class CombinedModel(nn.Module):
-    def __init__(self, encoder: nn.Module, generator: nn.Module, freeze_encoder: bool) -> None:
+    def __init__(self,
+                 encoder: nn.Module,
+                 generator: nn.Module,
+                 max_seq_len: int,
+                 freeze_encoder: bool,
+                 ) -> None:
         super().__init__()
         self.encoder = encoder
         self.generator = generator
+        self.max_seq_len = max_seq_len
         self.freeze_encoder = freeze_encoder
 
     @property
@@ -70,23 +76,29 @@ class CombinedModel(nn.Module):
         return self
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None) -> CausalLMOutputWithPast:
-        with torch.inference_mode(self.freeze_encoder):
+        with torch.inference_mode():
             encoder_output = self.encoder(input_ids, attention_mask)
             hidden_states = encoder_output.last_hidden_state
+            bos_hidden_state = hidden_states[0, 0]
 
-            if attention_mask is not None:
-                inputs_embeds = hidden_states[attention_mask.bool()]
+            if attention_mask is None:
+                attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
             else:
-                inputs_embeds = hidden_states.flatten(0, 1)
-            inputs_embeds = inputs_embeds.unsqueeze(0)  # restore batch dimension
+                attention_mask = attention_mask.bool()
+            attention_mask[1:, 0] = False  # remove BOS embeddings except for the first one
+
+            inputs_embeds = hidden_states[attention_mask][-self.max_seq_len:]
+            inputs_embeds[0] = bos_hidden_state
+            inputs_embeds = inputs_embeds.unsqueeze(0)
 
         return self.generator(inputs_embeds=inputs_embeds)
 
 
 class SplitAdapter(AdapterBase):
-    def __init__(self, num_gen_layers: int, *args, **kwargs) -> None:
+    def __init__(self, num_gen_layers: int, max_seq_len: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.num_gen_layers = num_gen_layers
+        self.max_seq_len = max_seq_len
 
     def get_args_kwargs(self,
                         input_ids: torch.Tensor,
@@ -98,6 +110,7 @@ class SplitAdapter(AdapterBase):
                         target_attn_mask: torch.Tensor,
                         ) -> tuple[tuple[Any], dict[str, Any]]:
         # TODO
+        # TODO: single batch assert
         args = (input_ids,)
         kwargs = dict(attention_mask=input_attn_mask)
         return args, kwargs
@@ -112,4 +125,5 @@ class SplitAdapter(AdapterBase):
         if freeze_encoder:
             encoder = encoder.eval().requires_grad_(False)
 
-        return CombinedModel(encoder, generator, freeze_encoder)
+        model = CombinedModel(encoder, generator, self.max_seq_len, freeze_encoder)
+        return model

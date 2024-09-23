@@ -19,6 +19,7 @@ CONFIGS_REGISTRY = {
     # adapters
     'identity_adapter': AdapterConfig,
     'prefix_unmask_adapter': AdapterConfig,
+    'smooth_prefix_unmask_adapter': AdapterConfig,
     'split_adapter': SplitAdapterConfig,
 
     # checkpointers
