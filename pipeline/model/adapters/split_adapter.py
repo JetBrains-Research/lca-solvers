@@ -76,7 +76,7 @@ class CombinedModel(nn.Module):
         return self
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None) -> CausalLMOutputWithPast:
-        with torch.inference_mode():
+        with torch.inference_mode(self.freeze_encoder):
             encoder_output = self.encoder(input_ids, attention_mask)
             hidden_states = encoder_output.last_hidden_state
             bos_hidden_state = hidden_states[0, 0]

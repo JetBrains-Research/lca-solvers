@@ -70,6 +70,10 @@ class SmoothPrefixUnmaskAttention(LlamaFlashAttention2):
 
 
 class SmoothPrefixUnmaskAdapter(AdapterBase):
+    def __init__(self, past_weight_decay: float, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.past_weight_decay = past_weight_decay
+
     def init_optimizer(self, model: nn.Module, **optim_kwargs) -> torch.optim.AdamW:
         weight_decay = optim_kwargs.pop('weight_decay', 0)
 
@@ -89,7 +93,7 @@ class SmoothPrefixUnmaskAdapter(AdapterBase):
                 no_decay_params.append(params)
 
         optimizer = torch.optim.AdamW(params=[
-            {'name': 'past_weights', 'params': past_weights, 'weight_decay': 0},
+            {'name': 'past_weights', 'params': past_weights, 'weight_decay': self.past_weight_decay},
             {'name': 'decay_params', 'params': decay_params, 'weight_decay': weight_decay},
             {'name': 'no_decay_params', 'params': no_decay_params, 'weight_decay': 0},
         ], **optim_kwargs)

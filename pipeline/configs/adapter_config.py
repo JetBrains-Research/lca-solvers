@@ -10,6 +10,11 @@ class AdapterConfig(ConfigBase):
 
 
 @dataclass
+class SmoothPrefixUnmaskAdapterConfig(AdapterConfig):
+    past_weight_decay: float
+
+
+@dataclass
 class SplitAdapterConfig(AdapterConfig):
     num_gen_layers: int
     max_seq_len: int

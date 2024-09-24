@@ -1,5 +1,6 @@
 from pipeline.configs.adapter_config import (
     AdapterConfig,
+    SmoothPrefixUnmaskAdapterConfig,
     SplitAdapterConfig,
 )
 from pipeline.configs.checkpointer_config import (
@@ -19,7 +20,7 @@ CONFIGS_REGISTRY = {
     # adapters
     'identity_adapter': AdapterConfig,
     'prefix_unmask_adapter': AdapterConfig,
-    'smooth_prefix_unmask_adapter': AdapterConfig,
+    'smooth_prefix_unmask_adapter': SmoothPrefixUnmaskAdapterConfig,
     'split_adapter': SplitAdapterConfig,
 
     # checkpointers

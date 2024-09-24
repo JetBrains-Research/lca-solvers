@@ -56,11 +56,7 @@ class ComposerBase(ABC):
         datapoint = Datapoint(**datapoint)
 
         if self.recalculate_random_category:
-            non_categorized_lines = set(range(datapoint.completion_file['content'].count('\n') + 1))
-            for category, lines in datapoint.completion_lines.items():
-                if category != 'random':
-                    non_categorized_lines.difference_update(lines)
-            datapoint.completion_lines['random'] = list(non_categorized_lines)
+            datapoint.recalculate_random_category()
 
         return ComposedDatapoint(
             pre_context_prompt=self.get_pre_context_prompt(datapoint),

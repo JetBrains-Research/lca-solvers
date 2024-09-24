@@ -31,6 +31,13 @@ class Datapoint:
     repo_snapshot: RepoSnapshot
     completion_lines_raw: CompletionLines | None = None
 
+    def recalculate_random_category(self) -> None:
+        non_categorized_lines = set(range(self.completion_file['content'].count('\n') + 1))
+        for category, lines in self.completion_lines.items():
+            if category != 'random':
+                non_categorized_lines.difference_update(lines)
+        self.completion_lines['random'] = list(non_categorized_lines)
+
 
 class BatchDatapoint(TypedDict):
     repo: list[str]
