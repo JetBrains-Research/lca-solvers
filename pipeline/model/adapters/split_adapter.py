@@ -1,6 +1,8 @@
 from pipeline.model.adapters.adapter_base import AdapterBase
+from pipeline.model.adapters.utils import crop_tail_inplace
 
 import copy
+import os
 import re
 from typing import Any, NoReturn
 from typing_extensions import Self
@@ -75,6 +77,12 @@ class CombinedModel(nn.Module):
 
         return self
 
+    def save_pretrained(self, save_directory: str) -> None:
+        # load is currently not implemented
+        if not self.freeze_encoder:
+            self.encoder.save_pretrained(os.path.join(save_directory, 'encoder'))
+        self.generator.save_pretrained(os.path.join(save_directory, 'generator'))
+
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None) -> CausalLMOutputWithPast:
         with torch.inference_mode(self.freeze_encoder):
             encoder_output = self.encoder(input_ids, attention_mask)
@@ -109,10 +117,17 @@ class SplitAdapter(AdapterBase):
                         input_attn_mask: torch.Tensor,
                         target_attn_mask: torch.Tensor,
                         ) -> tuple[tuple[Any], dict[str, Any]]:
-        # TODO
-        # TODO: single batch assert
-        args = (input_ids,)
-        kwargs = dict(attention_mask=input_attn_mask)
+        if input_ids.shape[0] != 1:
+            raise ValueError('This adapter only accepts batch_size = 1.')
+
+        crop_tail_inplace(target_ids, self.max_seq_len)
+        crop_tail_inplace(loss_mask, self.max_seq_len)
+        crop_tail_inplace(completion_mask, self.max_seq_len)
+        crop_tail_inplace(category_ids, self.max_seq_len)
+        crop_tail_inplace(target_attn_mask, self.max_seq_len)
+
+        args = (input_ids.squeeze(0),)
+        kwargs = dict(attention_mask=input_attn_mask.squeeze(0))
         return args, kwargs
 
     def adapt(self, model: nn.Module) -> nn.Module:

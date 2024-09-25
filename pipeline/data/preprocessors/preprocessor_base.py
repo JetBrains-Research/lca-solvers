@@ -1,5 +1,7 @@
 from pipeline.data.composed_datapoint import BatchComposedDatapoint
 
+import math
+import warnings
 from abc import ABC, abstractmethod
 from typing import TypedDict
 
@@ -40,3 +42,18 @@ class PreprocessorBase(ABC):
     @abstractmethod
     def __call__(self, batch: BatchComposedDatapoint) -> PreprocessedBatch:
         raise NotImplementedError
+
+
+class AmortizedPreprocessorBase(PreprocessorBase, ABC):
+    def __init__(self, num_chars_per_token: int, verbose: bool) -> None:
+        self.num_chars_per_token = num_chars_per_token
+        self.verbose = verbose
+
+    def _inc_num_chars_per_token(self) -> None:
+        old_value = self.num_chars_per_token
+        self.num_chars_per_token = math.ceil(1.5 * self.num_chars_per_token)
+
+        if self.verbose:
+            warnings.warn(
+                f'num_chars_per_token has been increased from {old_value} to {self.num_chars_per_token} '
+                'due to an underestimation of the length of the truncated character sequence.')

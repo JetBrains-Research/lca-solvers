@@ -1,9 +1,8 @@
 from pipeline.data.categories import CATEGORY2ID, UNDEFINED_CATEGORY_ID
 from pipeline.data.composed_datapoint import BatchComposedDatapoint
 from pipeline.data.datapoint import CompletionLines
-from pipeline.data.preprocessors.preprocessor_base import PreprocessedBatch, PreprocessorBase
+from pipeline.data.preprocessors.preprocessor_base import PreprocessedBatch, AmortizedPreprocessorBase
 
-import math
 import re
 import warnings
 
@@ -11,7 +10,7 @@ import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 
-class CompletionLossPreprocessor(PreprocessorBase):
+class CompletionLossPreprocessor(AmortizedPreprocessorBase):
     def __init__(self,
                  tokenizer: PreTrainedTokenizerBase,
                  max_seq_len: int,
@@ -22,6 +21,8 @@ class CompletionLossPreprocessor(PreprocessorBase):
                  padding: bool,
                  verbose: bool,
                  ) -> None:
+        super().__init__(num_chars_per_token, verbose)
+
         if not 0 < loss_ratio <= 1:
             raise ValueError('loss_ratio must be selected from the interval (0, 1]. '
                              f'Got {loss_ratio} instead.')
@@ -41,19 +42,8 @@ class CompletionLossPreprocessor(PreprocessorBase):
         self.context_tokens = context_tokens
 
         self.loss_ratio = loss_ratio
-        self.num_chars_per_token = num_chars_per_token
         self.use_sep_token = use_sep_token
         self.padding = padding
-        self.verbose = verbose
-
-    def _inc_num_chars_per_token(self) -> None:
-        old_value = self.num_chars_per_token
-        self.num_chars_per_token = math.ceil(1.5 * self.num_chars_per_token)
-
-        if self.verbose:
-            warnings.warn(
-                f'num_chars_per_token has been increased from {old_value} to {self.num_chars_per_token} '
-                'due to an underestimation of the length of the truncated character sequence.')
 
     def tokenize_pre_context_prompt(self, prompts: list[str]) -> BatchEncoding:
         char_trunc_upper_bound = self.num_chars_per_token * self.max_seq_len
