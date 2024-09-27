@@ -120,14 +120,24 @@ class SplitAdapter(AdapterBase):
         if input_ids.shape[0] != 1:
             raise ValueError('This adapter only accepts batch_size = 1.')
 
+        num_blocks = len(input_attn_mask[0])
+        num_tokens = input_attn_mask[0].sum(-1).tolist()
+        first_block_idx = 0
+
+        for i in range(num_blocks - 1, -1, -1):
+            if sum(num_tokens[i:]) - num_blocks >= self.max_seq_len:
+                first_block_idx = i
+                break
+
         crop_tail_inplace(target_ids, self.max_seq_len)
         crop_tail_inplace(loss_mask, self.max_seq_len)
         crop_tail_inplace(completion_mask, self.max_seq_len)
         crop_tail_inplace(category_ids, self.max_seq_len)
         crop_tail_inplace(target_attn_mask, self.max_seq_len)
+        torch.cuda.empty_cache()
 
-        args = (input_ids.squeeze(0),)
-        kwargs = dict(attention_mask=input_attn_mask.squeeze(0))
+        args = (input_ids.squeeze(0)[first_block_idx:],)
+        kwargs = dict(attention_mask=input_attn_mask.squeeze(0)[first_block_idx:])
         return args, kwargs
 
     def adapt(self, model: nn.Module) -> nn.Module:

@@ -7,13 +7,19 @@ from pipeline.configs.checkpointer_config import (
     CheckpointManagerConfig,
     TopKCheckpointManagerConfig,
 )
-from pipeline.configs.composer_config import ChainedComposerConfig
+from pipeline.configs.composer_config import (
+    ChainedComposerConfig,
+    SplitComposerConfig,
+)
 from pipeline.configs.config_base import ConfigBase
 from pipeline.configs.logger_config import (
     LocalLoggerConfig,
     WandbLoggerConfig,
 )
-from pipeline.configs.preprocessor_config import PreprocessorConfig
+from pipeline.configs.preprocessor_config import (
+    PreprocessorConfig,
+    SplitPreprocessorConfig,
+)
 from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
 
 CONFIGS_REGISTRY = {
@@ -34,11 +40,13 @@ CONFIGS_REGISTRY = {
 
     # composers
     'chained_composer': ChainedComposerConfig,
+    'split_composer': SplitComposerConfig,
 
     # preprocessors
     'completion_loss_preprocessor': PreprocessorConfig,
     'file_level_preprocessor': PreprocessorConfig,
     'lm_preprocessor': PreprocessorConfig,
+    'split_preprocessor': SplitPreprocessorConfig,
 
     # trainers
     'full_finetuning_trainer': FullFineTuningTrainerConfig,

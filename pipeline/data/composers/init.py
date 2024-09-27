@@ -16,9 +16,12 @@ def init_composer(cls_name: str,
                   tokenizer: PreTrainedTokenizerBase,
                   **kwargs,
                   ) -> ComposerBase:
+    if cls_name == 'split_composer':
+        kwargs['tokenizer'] = tokenizer
+
     config = CONFIGS_REGISTRY[cls_name].from_dict(dict(loaded_config) | kwargs)
 
-    if cls_name == 'chained_composer':
+    if cls_name in ('chained_composer', 'split_composer'):
         for path in loaded_config.block_configs:
             full_path = os.path.join(configs_dir, 'composer/chained_composer/blocks', path)
             block_name = os.path.basename(os.path.dirname(path))

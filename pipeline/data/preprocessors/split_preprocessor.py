@@ -3,6 +3,7 @@ from pipeline.data.categories import CATEGORY2ID, UNDEFINED_CATEGORY_ID
 from pipeline.data.datapoint import CompletionLines
 from pipeline.data.preprocessors.preprocessor_base import PreprocessedBatch, AmortizedPreprocessorBase
 
+import math
 import re
 
 import torch
@@ -63,12 +64,14 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
             return_attention_mask=False,
         )
 
-    def get_loss_mask(self, *args, **kwargs) -> torch.Tensor:
-        pass  # TODO
+    def get_loss_mask(self, seq_len: int) -> torch.Tensor:
+        mask = torch.zeros(1, seq_len, dtype=torch.bool)
+        mask[:, -math.ceil(self.loss_ratio * seq_len):] = True
+        return mask
 
     def get_completion_mask(self, seq_len: int, completion_len: int) -> torch.Tensor:
-        mask = torch.zeros(1, seq_len, dtype=torch.long)
-        mask[:, -completion_len:] = 1
+        mask = torch.zeros(1, seq_len, dtype=torch.bool)
+        mask[:, -completion_len:] = True
         return mask
 
     @staticmethod
@@ -135,7 +138,7 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
         return PreprocessedBatch(
             input_ids=input_ids,
             target_ids=target_ids,
-            loss_mask=...,
+            loss_mask=self.get_loss_mask(seq_len),
             completion_mask=self.get_completion_mask(seq_len, completion_len),
             category_ids=self.get_category_ids(
                 seq_len=seq_len,
@@ -145,5 +148,5 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
                 completion_lines=batch['completion_lines'][0],
             ),
             input_attn_mask=input_attn_mask,
-            target_attn_mask=torch.ones_like(target_ids),
+            target_attn_mask=torch.ones_like(target_ids, dtype=torch.bool),
         )

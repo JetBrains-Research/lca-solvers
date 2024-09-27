@@ -1,8 +1,8 @@
 from pipeline.data.composed_datapoint import ComposedBlockDatapoint, BatchComposedBlockDatapoint
-from pipeline.data.composers.chain import UnsafeComposerChain
+from pipeline.data.composers.chain import ComposerBlock, UnsafeComposerChain
 from pipeline.data.datapoint import Datapoint, BatchDatapoint
 
-from typing import Any
+from typing import Any, Sequence
 
 from transformers import PreTrainedTokenizerBase
 
@@ -14,14 +14,14 @@ class SplitComposer:
                  block_sep: str,
                  recalculate_random_category: bool,
                  tokenizer: PreTrainedTokenizerBase,
-                 composer_chain: UnsafeComposerChain,
+                 blocks: Sequence[ComposerBlock],
                  ) -> None:
         self.max_block_size = max_block_size - 1  # exclude BOS
         self.max_num_blocks = max_num_blocks - 1  # exclude completion block
         self.block_sep = block_sep
         self.recalculate_random_category = recalculate_random_category
         self.tokenizer = tokenizer
-        self.composer_chain = composer_chain
+        self.composer_chain = UnsafeComposerChain(*blocks)
 
         self.max_token_len = max(map(len, tokenizer.get_vocab()))
         self.min_token_len = min(map(len, tokenizer.get_vocab()))

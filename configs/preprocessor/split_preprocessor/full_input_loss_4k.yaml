@@ -1,0 +1,3 @@
+max_completion_len: 4096
+loss_ratio: 1
+num_chars_per_token: 6
