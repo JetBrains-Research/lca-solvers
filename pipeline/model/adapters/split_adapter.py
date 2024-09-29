@@ -4,6 +4,7 @@ from pipeline.model.adapters.utils import crop_tail_inplace
 import copy
 import os
 import re
+from contextlib import nullcontext
 from typing import Any, NoReturn
 from typing_extensions import Self
 
@@ -44,12 +45,14 @@ class CombinedModel(nn.Module):
                  encoder: nn.Module,
                  generator: nn.Module,
                  max_seq_len: int,
+                 simplified_rope: bool,
                  freeze_encoder: bool,
                  ) -> None:
         super().__init__()
         self.encoder = encoder
         self.generator = generator
         self.max_seq_len = max_seq_len
+        self.simplified_rope = simplified_rope
         self.freeze_encoder = freeze_encoder
 
     @property
@@ -84,7 +87,7 @@ class CombinedModel(nn.Module):
         self.generator.save_pretrained(os.path.join(save_directory, 'generator'))
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None) -> CausalLMOutputWithPast:
-        with torch.inference_mode(self.freeze_encoder):
+        with (nullcontext, torch.inference_mode)[self.freeze_encoder]():
             encoder_output = self.encoder(input_ids, attention_mask)
             hidden_states = encoder_output.last_hidden_state
             bos_hidden_state = hidden_states[0, 0]
@@ -99,14 +102,29 @@ class CombinedModel(nn.Module):
             inputs_embeds[0] = bos_hidden_state
             inputs_embeds = inputs_embeds.unsqueeze(0)
 
-        return self.generator(inputs_embeds=inputs_embeds)
+            if self.simplified_rope:
+                position_ids = torch.arange(attention_mask.shape[-1], dtype=torch.long, device=self.device)
+                position_ids = position_ids.repeat(attention_mask.shape[0], 1)
+                position_ids[1:] -= 1
+                position_ids = position_ids[attention_mask][-self.max_seq_len:]
+                position_ids = position_ids.unsqueeze(0)
+            else:
+                position_ids = None
+
+        return self.generator(inputs_embeds=inputs_embeds, position_ids=position_ids)
 
 
 class SplitAdapter(AdapterBase):
-    def __init__(self, num_gen_layers: int, max_seq_len: int, *args, **kwargs) -> None:
+    def __init__(self,
+                 num_gen_layers: int,
+                 max_seq_len: int,
+                 simplified_rope: bool,
+                 *args, **kwargs,
+                 ) -> None:
         super().__init__(*args, **kwargs)
         self.num_gen_layers = num_gen_layers
         self.max_seq_len = max_seq_len
+        self.simplified_rope = simplified_rope
 
     def get_args_kwargs(self,
                         input_ids: torch.Tensor,
@@ -146,9 +164,9 @@ class SplitAdapter(AdapterBase):
         freeze_encoder = not any(
             re.search(self.params_pattern, f'encoder.{name}')
             for name, _ in encoder.named_parameters()
-        )
+        ) if self.params_pattern is not None else False
         if freeze_encoder:
             encoder = encoder.eval().requires_grad_(False)
 
-        model = CombinedModel(encoder, generator, self.max_seq_len, freeze_encoder)
+        model = CombinedModel(encoder, generator, self.max_seq_len, self.simplified_rope, freeze_encoder)
         return model

@@ -18,6 +18,11 @@ class FileFilter(ComposerBlock, ABC):
         return FileFilter, FilePreprocessor, FileChunker
 
 
+class NullFileFilter(FileFilter):
+    def __call__(self, *_args, **_kwargs) -> Sequence[File]:
+        return []
+
+
 class InclusiveFileExtensionFilter(FileFilter):
     def __init__(self, whitelist: list[str]) -> None:
         self.whitelist = tuple(whitelist)

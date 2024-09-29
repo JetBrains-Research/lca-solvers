@@ -18,3 +18,4 @@ class SmoothPrefixUnmaskAdapterConfig(AdapterConfig):
 class SplitAdapterConfig(AdapterConfig):
     num_gen_layers: int
     max_seq_len: int
+    simplified_rope: bool

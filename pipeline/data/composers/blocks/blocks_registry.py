@@ -22,6 +22,7 @@ from pipeline.data.composers.blocks.file_chunking import (
     CodeSegmentGrainedChunker,
 )
 from pipeline.data.composers.blocks.file_filtering import (
+    NullFileFilter,
     InclusiveFileExtensionFilter,
     ExclusiveFileExtensionFilter,
     EmptyFileFilter,
@@ -36,6 +37,7 @@ from pipeline.data.composers.blocks.file_preprocessing import (
 
 BLOCKS_REGISTRY = {
     # file_filtering
+    'null_file_filter': NullFileFilter,
     'inclusive_file_extension_filter': InclusiveFileExtensionFilter,
     'exclusive_file_extension_filter': ExclusiveFileExtensionFilter,
     'empty_file_filter': EmptyFileFilter,

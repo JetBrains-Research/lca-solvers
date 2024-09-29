@@ -22,7 +22,9 @@ def simulate_training_step(model: nn.Module,
 
     for _ in range(accumulation_steps):
         model_output = model(input_ids, attention_mask)
-        loss = F.cross_entropy(model_output.logits.flatten(0, 1), input_ids.flatten(0, 1))
+        logits = model_output.logits.flatten(0, 1)
+        target_ids = torch.randint(0, 10_000, (logits.shape[0],), device=model.device)
+        loss = F.cross_entropy(logits, target_ids)
         loss.backward()
 
     optimizer.step()
@@ -95,8 +97,8 @@ def main() -> None:
     # init parameters
     random_seed = 1337
     model_name = 'deepseek-ai/deepseek-coder-1.3b-base'
-    cache_file = 'extra/cache/mem_grid_6.pt'
-    plot_file = 'extra/viz/mem_grid_6.png'
+    cache_file = 'extra/cache/mem_grid_full_ft_6_zoom.pt'
+    plot_file = 'extra/viz/mem_grid_full_ft_6_zoom.png'
     num_gen_layers = 6
     block_sizes = [2 ** power for power in range(6, 10 + 1)] + list(range(2 ** 11, 2 ** 13 + 1, 1024))
     num_blocks = list(range(1, 48 + 1))
@@ -117,6 +119,7 @@ def main() -> None:
     adapter = SplitAdapter(
         num_gen_layers=num_gen_layers,
         max_seq_len=max(num_blocks) * max(block_sizes) + 42,
+        simplified_rope=False,
         model_name=model_name,
         params_pattern='^generator.*')
     model = adapter.adapt(model)
