@@ -1,0 +1,4 @@
+params_pattern: ^generator.*
+num_gen_layers: 10
+max_seq_len: 40960
+simplified_rope: False

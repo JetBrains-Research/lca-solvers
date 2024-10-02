@@ -30,6 +30,11 @@ train_metrics: [
   inproject_cross_entropy,
   non_informative_cross_entropy,
   random_cross_entropy,
+
+  inproject_top_3_accuracy,
+  inproject_top_5_accuracy,
+  inproject_top_10_accuracy,
+
   epoch,
   learning_rate,
   past_weights,
@@ -47,6 +52,11 @@ valid_metrics: [
   inproject_cross_entropy,
   non_informative_cross_entropy,
   random_cross_entropy,
+
+  inproject_top_3_accuracy,
+  inproject_top_5_accuracy,
+  inproject_top_10_accuracy,
+
   epoch,
 ]
 valid_ema_alpha: null

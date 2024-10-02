@@ -23,9 +23,6 @@ class CheckpointManager:  # aka checkpointer
                  optim_state_filename: str,
                  metrics_filename: str,
                  ) -> None:
-        if main_metric not in METRICS_REGISTRY:
-            raise ValueError('The specified main_metric is not contained in the registry.')
-
         self.init_from = init_from
         self.main_metric_name = main_metric
         self.main_metric = METRICS_REGISTRY[main_metric]

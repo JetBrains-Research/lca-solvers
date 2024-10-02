@@ -22,8 +22,9 @@ def top_k_accuracy_factory(k: int) -> Type[MetricBase]:
                                **_kwargs,
                                ) -> None:
             logits = model_output.logits[mask]
-            target_ids = target_ids[mask]
-            self.tp_plus_tn += (logits.topk(k, dim=-1).indices == target_ids.unsqueeze(-1)).any(-1).sum()
+            target_ids = target_ids[mask].unsqueeze(-1)
+            pred_ids = logits.topk(k, dim=-1).indices
+            self.tp_plus_tn += (pred_ids == target_ids).any(-1).sum().item()
             self.num_tokens += mask.sum().item()
 
         def batch_commit(self, **_kwargs) -> MetricValue:

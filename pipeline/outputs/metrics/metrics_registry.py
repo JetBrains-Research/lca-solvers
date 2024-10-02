@@ -43,7 +43,7 @@ class MetricsRegistry(dict):
             'random_', 'other_',
         )
         if key.startswith(categorized_prefixes):
-            category = key.split('_')[0]
+            category = key.split('_')[0] if not key.startswith('non_informative_') else 'non_informative'
             return categorized_metric_factory(metric_cls, category)
 
         return loss_based_metric_factory(metric_cls)
