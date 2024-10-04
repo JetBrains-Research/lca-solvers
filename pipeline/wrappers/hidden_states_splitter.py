@@ -96,15 +96,18 @@ class HiddenStatesSplitter:
         for idx, decoder_layer in enumerate(layers):
             if split_is_on:
                 hook_handle = decoder_layer.register_forward_pre_hook(self.kwarg_adjuster_pre_hook, with_kwargs=True)
+                print(f'Layer {idx} -> Adjuster Pre-Hook')
                 self._hook_handles.append(hook_handle)
 
             if idx in split_points and not split_is_on:
                 hook_handle = decoder_layer.register_forward_hook(self.split_layer_hook_fn)
                 split_is_on = True
+                print(f'Layer {idx} -> Split Hook')
                 self._hook_handles.append(hook_handle)
             elif idx in split_points and split_is_on:
                 hook_handle = decoder_layer.register_forward_hook(self.compose_layer_hook_fn)
                 split_is_on = False
+                print(f'Layer {idx} -> Compose Hook')
                 self._hook_handles.append(hook_handle)
 
     def remove_hooks(self) -> None:
@@ -181,7 +184,8 @@ class HiddenStatesSplitter:
             return padded_tensor.view(padded_tensor.size(0) * _split_size,
                                       padded_tensor.size(1) // _split_size)
 
-        kwargs['position_ids'] = _split_position_tensor(kwargs['position_ids'])
+        batched_position_ids = kwargs['position_ids'].repeat(module_input[0].size(0) // split_size, 1)
+        kwargs['position_ids'] = _split_position_tensor(batched_position_ids)
         kwargs['position_embeddings'] = None
 
         # Handle 'attention_mask' based on the attention implementation
