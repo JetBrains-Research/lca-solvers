@@ -12,7 +12,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
 @dataclass
-class FullFineTuningTrainerConfig(ConfigBase):
+class UniversalTrainerConfig(ConfigBase):
     model: PreTrainedModel
     tokenizer: PreTrainedTokenizerBase
     train_ds: Dataset

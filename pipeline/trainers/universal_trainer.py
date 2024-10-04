@@ -19,7 +19,7 @@ from tqdm.auto import trange, tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 
-class FullFineTuningTrainer(TrainerBase):
+class UniversalTrainer(TrainerBase):
     def __init__(self,
                  model: PreTrainedModel,
                  tokenizer: PreTrainedTokenizerBase,

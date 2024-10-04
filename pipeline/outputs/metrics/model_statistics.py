@@ -5,7 +5,7 @@ from typing import TypeVar
 import torch
 
 # avoiding cyclical imports
-FullFineTuningTrainer = TypeVar('FullFineTuningTrainer')
+UniversalTrainerConfig = TypeVar('UniversalTrainerConfig')
 
 
 class PastWeights(StatisticBase):
@@ -13,7 +13,7 @@ class PastWeights(StatisticBase):
         pass
 
     @torch.inference_mode
-    def batch_commit(self, trainer: FullFineTuningTrainer, **_kwargs) -> StatisticValue:
+    def batch_commit(self, trainer: UniversalTrainerConfig, **_kwargs) -> StatisticValue:
         past_weights_group = trainer.optimizer.param_groups[0]
         assert past_weights_group['name'] == 'past_weights'
 

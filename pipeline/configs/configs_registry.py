@@ -20,7 +20,7 @@ from pipeline.configs.preprocessor_config import (
     PreprocessorConfig,
     SplitPreprocessorConfig,
 )
-from pipeline.configs.trainer_config import FullFineTuningTrainerConfig
+from pipeline.configs.trainer_config import UniversalTrainerConfig
 
 CONFIGS_REGISTRY = {
     # adapters
@@ -49,5 +49,5 @@ CONFIGS_REGISTRY = {
     'split_preprocessor': SplitPreprocessorConfig,
 
     # trainers
-    'full_finetuning_trainer': FullFineTuningTrainerConfig,
+    'universal_trainer': UniversalTrainerConfig,
 }

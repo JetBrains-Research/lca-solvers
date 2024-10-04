@@ -1,5 +1,5 @@
-from pipeline.trainers.full_finetuning_trainer import FullFineTuningTrainer
+from pipeline.trainers.universal_trainer import UniversalTrainer
 
 TRAINERS_REGISTRY = {
-    'full_finetuning_trainer': FullFineTuningTrainer,
+    'universal_trainer': UniversalTrainer,
 }

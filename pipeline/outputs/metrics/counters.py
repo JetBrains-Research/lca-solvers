@@ -7,7 +7,7 @@ import torch
 T = TypeVar('T')
 
 # avoiding cyclical imports
-FullFineTuningTrainer = TypeVar('FullFineTuningTrainer')
+UniversalTrainer = TypeVar('UniversalTrainer')
 
 
 class EpochCounter(StatisticBase):
@@ -27,7 +27,7 @@ class EpochCounter(StatisticBase):
         if init_epoch is not None:
             self.init_epoch = init_epoch
 
-    def micro_batch_update(self, input_ids: torch.Tensor, trainer: FullFineTuningTrainer, **_kwargs) -> None:
+    def micro_batch_update(self, input_ids: torch.Tensor, trainer: UniversalTrainer, **_kwargs) -> None:
         if trainer.model.training:  # ignores validation samples
             self.samples += input_ids.shape[0]
             self.ds_length = len(trainer.train_dl.dataset)
