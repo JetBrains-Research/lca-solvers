@@ -45,9 +45,9 @@ DATASET_CONFIGS = {
     'large': 'configs/dataset/large.yaml',
 }
 COMPOSER_KWARGS = dict(
-    pre_context_prompt="# {}\n",
-    post_context_prompt="\n\n",
-    path_comment_template="# {filename}\n{content}",
+    pre_context_prompt='# {}\n',
+    post_context_prompt='\n\n',
+    path_comment_template='# {filename}\n{content}',
     recalculate_random_category=True,
 )
 COMPOSERS = {
