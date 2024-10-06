@@ -21,6 +21,7 @@ class PreprocessorConfig(ConfigBase):
 class SplitPreprocessorConfig(ConfigBase):
     tokenizer: PreTrainedTokenizerBase
     max_completion_len: int
+    max_seq_len: int
     loss_ratio: float
     num_chars_per_token: int
     verbose: bool = True

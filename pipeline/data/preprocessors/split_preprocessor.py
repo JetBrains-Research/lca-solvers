@@ -1,7 +1,11 @@
 from pipeline.data.composed_datapoint import BatchComposedBlockDatapoint
 from pipeline.data.categories import CATEGORY2ID, UNDEFINED_CATEGORY_ID
 from pipeline.data.datapoint import CompletionLines
-from pipeline.data.preprocessors.preprocessor_base import PreprocessedBatch, AmortizedPreprocessorBase
+from pipeline.data.preprocessors.preprocessor_base import (
+    BatchMetadata,
+    PreprocessedBatch,
+    AmortizedPreprocessorBase,
+)
 
 import math
 import re
@@ -14,6 +18,7 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
     def __init__(self,
                  tokenizer: PreTrainedTokenizerBase,
                  max_completion_len: int,
+                 max_seq_len: int,
                  loss_ratio: float,
                  num_chars_per_token: int,
                  verbose: bool,
@@ -29,6 +34,7 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
 
         self.tokenizer = tokenizer
         self.max_completion_len = max_completion_len
+        self.max_seq_len = max_seq_len
         self.loss_ratio = loss_ratio
 
     def tokenize_composed_completion(self, completion_block: str) -> BatchEncoding:
@@ -126,14 +132,25 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
         last_token_idx = completion_len = attention_mask[-1].sum() - 1
 
         attention_mask[1:, 0] = False  # remove BOS tokens except for the first one
-        target_ids = padded_batch.input_ids[attention_mask][None, 1:]
+        target_ids = padded_batch.input_ids[attention_mask][None, 1:][..., -self.max_seq_len:]
         seq_len = target_ids.shape[-1]
 
-        input_ids = padded_batch.input_ids.unsqueeze(0)
-        input_ids[:, -1, last_token_idx] = self.tokenizer.pad_token_id
+        input_attn_mask = padded_batch.attention_mask
+        input_attn_mask[-1, last_token_idx] = 0
+        num_blocks = len(input_attn_mask)
+        num_tokens = input_attn_mask.sum(-1).tolist()
 
-        input_attn_mask = padded_batch.attention_mask.unsqueeze(0)
-        input_attn_mask[:, -1, last_token_idx] = 0
+        first_block_idx = 0
+        for i in range(num_blocks - 1, -1, -1):
+            if sum(num_tokens[i:]) - num_blocks >= self.max_seq_len:
+                first_block_idx = i
+                break
+
+        input_ids = padded_batch.input_ids
+        input_ids[-1, last_token_idx] = self.tokenizer.pad_token_id
+        input_ids = input_ids[None, first_block_idx:]
+
+        input_attn_mask = input_attn_mask[None, first_block_idx:]
 
         return PreprocessedBatch(
             input_ids=input_ids,
@@ -149,4 +166,5 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
             ),
             input_attn_mask=input_attn_mask,
             target_attn_mask=torch.ones_like(target_ids, dtype=torch.bool),
+            metadata=BatchMetadata(max_seq_len=self.max_seq_len),
         )

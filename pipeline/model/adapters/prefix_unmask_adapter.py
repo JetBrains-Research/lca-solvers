@@ -1,4 +1,5 @@
 # see notebooks/attention_benchmarking.ipynb for more details
+from pipeline.data.preprocessors.preprocessor_base import BatchMetadata
 from pipeline.model.adapters.adapter_base import AdapterBase
 from pipeline.model.init import AttentionImplementation
 
@@ -121,6 +122,7 @@ class PrefixUnmaskAdapter(AdapterBase):
                         _category_ids: torch.Tensor,
                         input_attn_mask: torch.Tensor,
                         target_attn_mask: torch.Tensor,
+                        _metadata: BatchMetadata,
                         ) -> tuple[tuple[Any], dict[str, Any]]:
         if input_ids.shape[0] != 1:
             raise ValueError('This adapter only accepts batch_size = 1.')

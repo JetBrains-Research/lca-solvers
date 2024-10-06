@@ -1,3 +1,5 @@
+from pipeline.data.preprocessors.preprocessor_base import BatchMetadata
+
 import re
 from abc import ABC, abstractmethod
 from typing import Any, Iterable
@@ -49,6 +51,7 @@ class AdapterBase(ABC):
                         category_ids: torch.Tensor,
                         input_attn_mask: torch.Tensor,
                         target_attn_mask: torch.Tensor,
+                        metadata: BatchMetadata,
                         ) -> tuple[tuple[Any], dict[str, Any]]:
         raise NotImplementedError
 

@@ -1,5 +1,5 @@
+from pipeline.data.preprocessors.preprocessor_base import BatchMetadata
 from pipeline.model.adapters.adapter_base import AdapterBase
-from pipeline.model.adapters.utils import crop_tail_inplace
 
 import copy
 import os
@@ -44,14 +44,12 @@ class CombinedModel(nn.Module):
     def __init__(self,
                  encoder: nn.Module,
                  generator: nn.Module,
-                 max_seq_len: int,
                  simplified_rope: bool,
                  freeze_encoder: bool,
                  ) -> None:
         super().__init__()
         self.encoder = encoder
         self.generator = generator
-        self.max_seq_len = max_seq_len
         self.simplified_rope = simplified_rope
         self.freeze_encoder = freeze_encoder
 
@@ -86,7 +84,11 @@ class CombinedModel(nn.Module):
             self.encoder.save_pretrained(os.path.join(save_directory, 'encoder'))
         self.generator.save_pretrained(os.path.join(save_directory, 'generator'))
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None) -> CausalLMOutputWithPast:
+    def forward(self,
+                input_ids: torch.Tensor,
+                attention_mask: torch.Tensor | None,
+                max_seq_len: int,
+                ) -> CausalLMOutputWithPast:
         with (nullcontext, torch.inference_mode)[self.freeze_encoder]():
             encoder_output = self.encoder(input_ids, attention_mask)
             hidden_states = encoder_output.last_hidden_state
@@ -98,7 +100,7 @@ class CombinedModel(nn.Module):
                 attention_mask = attention_mask.bool()
             attention_mask[1:, 0] = False  # remove BOS embeddings except for the first one
 
-            inputs_embeds = hidden_states[attention_mask][-self.max_seq_len:]
+            inputs_embeds = hidden_states[attention_mask][-max_seq_len:]
             inputs_embeds[0] = bos_hidden_state
             inputs_embeds = inputs_embeds.unsqueeze(0)
 
@@ -106,7 +108,7 @@ class CombinedModel(nn.Module):
                 position_ids = torch.arange(attention_mask.shape[-1], dtype=torch.long, device=self.device)
                 position_ids = position_ids.repeat(attention_mask.shape[0], 1)
                 position_ids[1:] -= 1
-                position_ids = position_ids[attention_mask][-self.max_seq_len:]
+                position_ids = position_ids[attention_mask][-max_seq_len:]
                 position_ids = position_ids.unsqueeze(0)
             else:
                 position_ids = None
@@ -117,13 +119,11 @@ class CombinedModel(nn.Module):
 class SplitAdapter(AdapterBase):
     def __init__(self,
                  num_gen_layers: int,
-                 max_seq_len: int,
                  simplified_rope: bool,
                  *args, **kwargs,
                  ) -> None:
         super().__init__(*args, **kwargs)
         self.num_gen_layers = num_gen_layers
-        self.max_seq_len = max_seq_len
         self.simplified_rope = simplified_rope
 
     def get_args_kwargs(self,
@@ -134,28 +134,16 @@ class SplitAdapter(AdapterBase):
                         category_ids: torch.Tensor,
                         input_attn_mask: torch.Tensor,
                         target_attn_mask: torch.Tensor,
+                        metadata: BatchMetadata,
                         ) -> tuple[tuple[Any], dict[str, Any]]:
         if input_ids.shape[0] != 1:
             raise ValueError('This adapter only accepts batch_size = 1.')
 
-        num_blocks = len(input_attn_mask[0])
-        num_tokens = input_attn_mask[0].sum(-1).tolist()
-        first_block_idx = 0
-
-        for i in range(num_blocks - 1, -1, -1):
-            if sum(num_tokens[i:]) - num_blocks >= self.max_seq_len:
-                first_block_idx = i
-                break
-
-        crop_tail_inplace(target_ids, self.max_seq_len)
-        crop_tail_inplace(loss_mask, self.max_seq_len)
-        crop_tail_inplace(completion_mask, self.max_seq_len)
-        crop_tail_inplace(category_ids, self.max_seq_len)
-        crop_tail_inplace(target_attn_mask, self.max_seq_len)
-        torch.cuda.empty_cache()
-
-        args = (input_ids.squeeze(0)[first_block_idx:],)
-        kwargs = dict(attention_mask=input_attn_mask.squeeze(0)[first_block_idx:])
+        args = (input_ids.squeeze(0),)
+        kwargs = dict(
+            attention_mask=input_attn_mask.squeeze(0),
+            max_seq_len=metadata['max_seq_len'],
+        )
         return args, kwargs
 
     def adapt(self, model: nn.Module) -> nn.Module:
@@ -168,5 +156,5 @@ class SplitAdapter(AdapterBase):
         if freeze_encoder:
             encoder = encoder.eval().requires_grad_(False)
 
-        model = CombinedModel(encoder, generator, self.max_seq_len, self.simplified_rope, freeze_encoder)
+        model = CombinedModel(encoder, generator, self.simplified_rope, freeze_encoder)
         return model

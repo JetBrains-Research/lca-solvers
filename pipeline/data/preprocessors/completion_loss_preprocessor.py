@@ -1,7 +1,11 @@
 from pipeline.data.categories import CATEGORY2ID, UNDEFINED_CATEGORY_ID
 from pipeline.data.composed_datapoint import BatchComposedDatapoint
 from pipeline.data.datapoint import CompletionLines
-from pipeline.data.preprocessors.preprocessor_base import PreprocessedBatch, AmortizedPreprocessorBase
+from pipeline.data.preprocessors.preprocessor_base import (
+    BatchMetadata,
+    PreprocessedBatch,
+    AmortizedPreprocessorBase,
+)
 
 import re
 import warnings
@@ -226,4 +230,5 @@ class CompletionLossPreprocessor(AmortizedPreprocessorBase):
             category_ids=self.get_category_ids(tokenized_completions, batch['completion_lines'], target_attn_mask),
             input_attn_mask=input_attn_mask,
             target_attn_mask=target_attn_mask.bool(),
+            metadata=BatchMetadata(),
         )

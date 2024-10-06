@@ -1,3 +1,4 @@
+from pipeline.data.preprocessors.preprocessor_base import BatchMetadata
 from pipeline.model.adapters.adapter_base import AdapterBase
 
 from typing import Any
@@ -15,6 +16,7 @@ class IdentityAdapter(AdapterBase):
                         _category_ids: torch.Tensor,
                         input_attn_mask: torch.Tensor,
                         _target_attn_mask: torch.Tensor,
+                        _metadata: BatchMetadata,
                         ) -> tuple[tuple[Any], dict[str, Any]]:
         args = (input_ids,)
         kwargs = dict(attention_mask=input_attn_mask)
