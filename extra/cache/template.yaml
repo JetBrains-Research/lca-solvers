@@ -1,0 +1,42 @@
+output:
+  result_folder: "extra/outputs/composers_em_eval"
+  results_filename: null
+data:
+  dataset_name: "JetBrains-Research/lca-project-level-code-completion"
+  composer_name: null
+  # Eligible scopes: ["medium_context", "large_context", "huge_context"]
+  context_scopes: ["medium_context", "large_context"] # do not use small.
+  completion_categories: ["infile", "inproject"]
+  filter_extensions: null
+  # Only those extentions would be added to the context
+  lang_extensions: null
+  allowed_extensions: null
+  # select topk files from path_distance composer
+  # TODO think, do we need to generalize it to all composers
+  topk: -1
+model:
+  model_name: null
+  # We assess the avg toke length to make context truncation more effective.
+  # We truncate the context before tokenization. Tokenizer truncates se seauence too.
+  # Here instead you can fix it by any float.
+  # If it is too large, no problem, the context would not be truncated before tokenization.
+  token_length: null
+  tok_len_asses_cap: 2000000
+use_vllm: True
+vllm:
+  vllm_args:
+    download_dir: extra/cache/models
+    # You can set this parameter if VLLM return an error that the model with default context size can not fit into the memory.
+    # max_model_len: 15000
+  generation_args:
+    temperature: 0.0
+    max_tokens: 100
+    # Used to avoid early stopping on the empty line
+    min_tokens: 3
+    stop: ["\n"]
+eval:
+  # For VLLM this value can be arbitrary large, since it batches the items inside
+  batch_size: 20
+  context_size: 16384
+    # Is not used in the library, but can be used in outer scripts to iterate over the context.
+  context_size_list: [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16256] # 16256 = 16384 - 128

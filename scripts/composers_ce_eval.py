@@ -21,23 +21,23 @@ from datasets import load_dataset
 RANDOM_SEED = 1337
 MODEL_NAME = 'deepseek-ai/deepseek-coder-1.3b-base'
 RUNS = {
-    'AbsoluteCalls_FullFT_DeepSeekCoder1p3Base_HP001' : 'Absolute Calls with Path Distance sorting',
-    'FileLevel_FullFT_DeepSeekCoder1p3Base_HP001' : 'File-Level Completion',
-    'FuncCallsWithStrip_FullFT_DeepSeekCoder1p3Base_HP001' : 'Function Calls with Lines Strip',
-    'LowTokensRatioFiltering_FullFT_DeepSeekCoder1p3Base_HP001' : 'Low Token Ratio Filtering',
-    'MediumLines_FullFT_DeepSeekCoder1p3Base_HP001' : 'Low Token Ratio Filtering with Medium Line Length',
-    'NearestDeclarations_FullFT_DeepSeekCoder1p3Base_HP001' : 'Declarations Only sorted by Path Distance',
-    'NoLongFiles_FullFT_DeepSeekCoder1p3Base_HP001' : 'Long Files Filtering sorted by Function Calls',
-    'NoLongFilesWithHalfMemory_FullFT_DeepSeekCoder1p3Base_HP001' : 'Long Files Filtering with Half Memory',
-    'PartialMemory_FullFT_DeepSeekCoder1p3Base_HP001' : 'Path Distance Ordering with Half Memory',
-    'PathDistance_FullFT_DeepSeekCoder1p3Base_HP002' : 'Path Distance Ordering',
-    'PathDistance_FullFT_DeepSeekCoder1p3Base_HP003' : 'Path Distance without Completion Imports',
-    'PureFuncCalls_FullFT_DeepSeekCoder1p3Base_HP001' : 'Function Calls Ordering',
-    'PythonFiles_FullFT_DeepSeekCoder1p3Base_HP001' : 'Python Files Full Input Training',
-    'RandomDeclarations_FullFT_DeepSeekCoder1p3Base_HP001' : 'Declarations Only with Random Ordering',
-    'RelativeCalls_FullFT_DeepSeekCoder1p3Base_HP001' : 'Function Calls Ratio Ordering',
-    'Strip_FullFT_DeepSeekCoder1p3Base_HP001' : 'Stripped Filtered Lines sorted by Path Distance',
-    'TextFiles_FullFT_DeepSeekCoder1p3Base_HP002' : 'Text Files Groups',
+    'AbsoluteCalls_FullFT_DeepSeekCoder1p3Base_HP001': 'Absolute Calls with Path Distance sorting',
+    'FileLevel_FullFT_DeepSeekCoder1p3Base_HP001': 'File-Level Completion',
+    'FuncCallsWithStrip_FullFT_DeepSeekCoder1p3Base_HP001': 'Function Calls with Lines Strip',
+    'LowTokensRatioFiltering_FullFT_DeepSeekCoder1p3Base_HP001': 'Low Token Ratio Filtering',
+    'MediumLines_FullFT_DeepSeekCoder1p3Base_HP001': 'Low Token Ratio Filtering with Medium Line Length',
+    'NearestDeclarations_FullFT_DeepSeekCoder1p3Base_HP001': 'Declarations Only sorted by Path Distance',
+    'NoLongFiles_FullFT_DeepSeekCoder1p3Base_HP001': 'Long Files Filtering sorted by Function Calls',
+    'NoLongFilesWithHalfMemory_FullFT_DeepSeekCoder1p3Base_HP001': 'Long Files Filtering with Half Memory',
+    'PartialMemory_FullFT_DeepSeekCoder1p3Base_HP001': 'Path Distance Ordering with Half Memory',
+    'PathDistance_FullFT_DeepSeekCoder1p3Base_HP002': 'Path Distance Ordering',
+    'PathDistance_FullFT_DeepSeekCoder1p3Base_HP003': 'Path Distance without Completion Imports',
+    'PureFuncCalls_FullFT_DeepSeekCoder1p3Base_HP001': 'Function Calls Ordering',
+    'PythonFiles_FullFT_DeepSeekCoder1p3Base_HP001': 'Python Files Full Input Training',
+    'RandomDeclarations_FullFT_DeepSeekCoder1p3Base_HP001': 'Declarations Only with Random Ordering',
+    'RelativeCalls_FullFT_DeepSeekCoder1p3Base_HP001': 'Function Calls Ratio Ordering',
+    'Strip_FullFT_DeepSeekCoder1p3Base_HP001': 'Stripped Filtered Lines sorted by Path Distance',
+    'TextFiles_FullFT_DeepSeekCoder1p3Base_HP002': 'Text Files Groups',
     'No Fine-Tuning': 'No Fine-Tuning',
 }
 DATASET_CONFIGS = {
@@ -90,7 +90,7 @@ COMPOSERS = {
         PathCommentHarvester(chunks_sep='\n\n', path_comment_template='# {filename}\n{content}'),
     ], **COMPOSER_KWARGS),
 }
-OUTPUT_FILE = 'extra/checkpoint_comparison.jsonl'
+OUTPUT_FILE = 'extra/outputs/composers_ce_eval/checkpoint_comparison.jsonl'
 
 
 def main() -> None:

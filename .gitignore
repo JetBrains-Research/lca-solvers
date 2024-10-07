@@ -1,11 +1,13 @@
 .idea
 .ipynb_checkpoints
 **/__pycache__/
+extra/cache/models
+extra/outputs/composers_em_eval/*_detailed.jsonl
 runs/**/checkpoints
 runs/**/logs/stderr.json
 runs/**/logs/stdout.json
-wandb
 runs/test
+wandb
 venv
 main.ipynb
 main.py

@@ -1,0 +1,96 @@
+{
+    "category": {
+        "0": "infile",
+        "1": "infile",
+        "2": "inproject",
+        "3": "inproject"
+    },
+    "scope": {
+        "0": "large_context",
+        "1": "medium_context",
+        "2": "large_context",
+        "3": "medium_context"
+    },
+    "count": {
+        "0": 2691,
+        "1": 2224,
+        "2": 2595,
+        "3": 2236
+    },
+    "context_len_mean": {
+        "0": 11609.4321813452,
+        "1": 11553.4316546763,
+        "2": 11788.4053949904,
+        "3": 11381.8868515206
+    },
+    "scores": {
+        "0": {
+            "exact_match": {
+                "sum": 934,
+                "mean": 0.3470828688
+            },
+            "exact_match_strip": {
+                "sum": 1012,
+                "mean": 0.3760683761
+            },
+            "exact_match_valid": {
+                "sum": 1008,
+                "mean": 0.3745819398
+            }
+        },
+        "1": {
+            "exact_match": {
+                "sum": 822,
+                "mean": 0.3696043165
+            },
+            "exact_match_strip": {
+                "sum": 906,
+                "mean": 0.4073741007
+            },
+            "exact_match_valid": {
+                "sum": 903,
+                "mean": 0.4060251799
+            }
+        },
+        "2": {
+            "exact_match": {
+                "sum": 866,
+                "mean": 0.3337186898
+            },
+            "exact_match_strip": {
+                "sum": 940,
+                "mean": 0.3622350674
+            },
+            "exact_match_valid": {
+                "sum": 936,
+                "mean": 0.3606936416
+            }
+        },
+        "3": {
+            "exact_match": {
+                "sum": 959,
+                "mean": 0.4288908766
+            },
+            "exact_match_strip": {
+                "sum": 1094,
+                "mean": 0.4892665474
+            },
+            "exact_match_valid": {
+                "sum": 1081,
+                "mean": 0.4834525939
+            }
+        }
+    },
+    "time_per_item": {
+        "0": 0.5106141217,
+        "1": 0.5106141217,
+        "2": 0.5106141217,
+        "3": 0.5106141217
+    },
+    "context_len_config": {
+        "0": 16384,
+        "1": 16384,
+        "2": 16384,
+        "3": 16384
+    }
+}
