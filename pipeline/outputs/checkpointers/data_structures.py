@@ -3,7 +3,7 @@ from pipeline.outputs.loggers.logger_base import Log
 from dataclasses import dataclass
 from enum import Enum
 
-from transformers import PreTrainedModel
+import torch.nn as nn
 
 
 class LoadingMode(str, Enum):
@@ -15,5 +15,5 @@ class LoadingMode(str, Enum):
 @dataclass
 class Checkpoint:
     metrics: Log
-    model: PreTrainedModel
+    model: nn.Module
     optimizer_state: dict

@@ -3,16 +3,16 @@ from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, Metric
 from pipeline.trainers.trainer_base import TrainerBase
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from datasets import Dataset
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-from transformers import PreTrainedModel
 
 
 class Validator(TrainerBase):
     def __init__(self,
-                 model: PreTrainedModel,
+                 model: nn.Module,
                  adapter: AdapterBase,
                  valid_metrics: dict[MetricName, MetricBase],
                  valid_ds: Dataset,

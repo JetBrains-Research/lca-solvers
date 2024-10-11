@@ -46,7 +46,8 @@ CONFIGS_REGISTRY = {
     'completion_loss_preprocessor': PreprocessorConfig,
     'file_level_preprocessor': PreprocessorConfig,
     'lm_preprocessor': PreprocessorConfig,
-    'split_preprocessor': SplitPreprocessorConfig,
+    'split_completion_loss_preprocessor': SplitPreprocessorConfig,
+    'split_lm_preprocessor': SplitPreprocessorConfig,
 
     # trainers
     'universal_trainer': UniversalTrainerConfig,

@@ -51,12 +51,10 @@ def train_test_split(dataset: Dataset,
     return train_ds, test_ds
 
 
-def set_transform(train_ds: Dataset,
-                  test_ds: Dataset | None,
+def set_transform(dataset: Dataset | None,
                   composer: ComposerBase,
                   preprocessor: PreprocessorBase,
                   ) -> None:
     transform = lambda x: preprocessor(composer.compose_batch(x))
-    train_ds.set_transform(transform)
-    if test_ds is not None:
-        test_ds.set_transform(transform)
+    if dataset is not None:
+        dataset.set_transform(transform)

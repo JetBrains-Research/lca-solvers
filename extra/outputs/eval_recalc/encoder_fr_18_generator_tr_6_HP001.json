@@ -1,0 +1,17 @@
+{
+    "checkpoint": "runs/encoder_fr_18_generator_tr_6_HP001/checkpoints/0550/model",
+    "cross_entropy": 0.622247915725156,
+    "detached_cross_entropy": NaN,
+    "completion_cross_entropy": 0.5742846428476256,
+    "context_cross_entropy": 0.6390363095456535,
+    "full_cross_entropy": 0.622247915725156,
+    "commited_cross_entropy": 0.4273735462225834,
+    "common_cross_entropy": 0.38913098185727535,
+    "infile_cross_entropy": 0.363443204880849,
+    "inproject_cross_entropy": 0.4034516364806344,
+    "non_informative_cross_entropy": 0.9332804602527426,
+    "random_cross_entropy": 0.43188341902893895,
+    "inproject_top_3_accuracy": 0.9611517482977034,
+    "inproject_top_5_accuracy": 0.9730261195727451,
+    "inproject_top_10_accuracy": 0.983272756684073
+}

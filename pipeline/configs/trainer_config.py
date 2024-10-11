@@ -7,16 +7,18 @@ from pipeline.outputs.metrics.metric_base import MetricName
 from dataclasses import dataclass
 from typing import Literal
 
+import torch.nn as nn
 from datasets import Dataset
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import PreTrainedTokenizerBase
 
 
 @dataclass
 class UniversalTrainerConfig(ConfigBase):
-    model: PreTrainedModel
+    model: nn.Module
     tokenizer: PreTrainedTokenizerBase
     train_ds: Dataset
     valid_ds: Dataset | None
+    add_valid_ds: Dataset | None
 
     # Auxiliary objects
     adapter: AdapterBase

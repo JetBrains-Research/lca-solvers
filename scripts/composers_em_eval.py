@@ -141,6 +141,9 @@ def main() -> None:
                     composer_name = line[9:].replace('\\', '').rstrip()
                     break
 
+        if run_name == 'FileLevel_FullFT_DeepSeekCoder1p3Base_HP001':
+            composer_name = 'chained_composer/empty'
+
         composer_config_path = os.path.join(CONFIGS_DIR, 'composer', f'{composer_name}.yaml')
         composer_config = OmegaConf.load(composer_config_path)
 

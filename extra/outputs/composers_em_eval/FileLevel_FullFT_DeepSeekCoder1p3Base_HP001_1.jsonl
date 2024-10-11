@@ -1,1 +1,96 @@
-{"category":{"0":"infile","1":"infile","2":"inproject","3":"inproject"},"scope":{"0":"large_context","1":"medium_context","2":"large_context","3":"medium_context"},"count":{"0":2691,"1":2224,"2":2595,"3":2236},"context_len_mean":{"0":10835.1571906355,"1":10866.8435251799,"2":10981.0100192678,"3":10562.728980322},"scores":{"0":{"exact_match":{"sum":928,"mean":0.3448532144},"exact_match_strip":{"sum":1010,"mean":0.3753251579},"exact_match_valid":{"sum":1007,"mean":0.3742103307}},"1":{"exact_match":{"sum":763,"mean":0.3430755396},"exact_match_strip":{"sum":839,"mean":0.3772482014},"exact_match_valid":{"sum":836,"mean":0.3758992806}},"2":{"exact_match":{"sum":849,"mean":0.3271676301},"exact_match_strip":{"sum":931,"mean":0.3587668593},"exact_match_valid":{"sum":928,"mean":0.35761079}},"3":{"exact_match":{"sum":917,"mean":0.4101073345},"exact_match_strip":{"sum":1046,"mean":0.4677996422},"exact_match_valid":{"sum":1044,"mean":0.4669051878}}},"time_per_item":{"0":0.3882579902,"1":0.3882579902,"2":0.3882579902,"3":0.3882579902},"context_len_config":{"0":16384,"1":16384,"2":16384,"3":16384}}
+{
+    "category": {
+        "0": "infile",
+        "1": "infile",
+        "2": "inproject",
+        "3": "inproject"
+    },
+    "scope": {
+        "0": "large_context",
+        "1": "medium_context",
+        "2": "large_context",
+        "3": "medium_context"
+    },
+    "count": {
+        "0": 2691,
+        "1": 2224,
+        "2": 2595,
+        "3": 2236
+    },
+    "context_len_mean": {
+        "0": 2925.8268301747,
+        "1": 3379.2054856115,
+        "2": 2311.667822736,
+        "3": 2367.7307692308
+    },
+    "scores": {
+        "0": {
+            "exact_match": {
+                "sum": 829,
+                "mean": 0.3080639168
+            },
+            "exact_match_strip": {
+                "sum": 887,
+                "mean": 0.3296172427
+            },
+            "exact_match_valid": {
+                "sum": 884,
+                "mean": 0.3285024155
+            }
+        },
+        "1": {
+            "exact_match": {
+                "sum": 690,
+                "mean": 0.3102517986
+            },
+            "exact_match_strip": {
+                "sum": 757,
+                "mean": 0.3403776978
+            },
+            "exact_match_valid": {
+                "sum": 753,
+                "mean": 0.3385791367
+            }
+        },
+        "2": {
+            "exact_match": {
+                "sum": 658,
+                "mean": 0.2535645472
+            },
+            "exact_match_strip": {
+                "sum": 705,
+                "mean": 0.2716763006
+            },
+            "exact_match_valid": {
+                "sum": 704,
+                "mean": 0.2712909441
+            }
+        },
+        "3": {
+            "exact_match": {
+                "sum": 638,
+                "mean": 0.2853309481
+            },
+            "exact_match_strip": {
+                "sum": 694,
+                "mean": 0.3103756708
+            },
+            "exact_match_valid": {
+                "sum": 691,
+                "mean": 0.3090339893
+            }
+        }
+    },
+    "time_per_item": {
+        "0": 0.089882538,
+        "1": 0.089882538,
+        "2": 0.089882538,
+        "3": 0.089882538
+    },
+    "context_len_config": {
+        "0": 16384,
+        "1": 16384,
+        "2": 16384,
+        "3": 16384
+    }
+}

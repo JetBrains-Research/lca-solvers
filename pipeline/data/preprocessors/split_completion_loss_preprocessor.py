@@ -14,7 +14,7 @@ import torch
 from transformers import BatchEncoding, PreTrainedTokenizerBase
 
 
-class SplitPreprocessor(AmortizedPreprocessorBase):
+class SplitCompletionLossPreprocessor(AmortizedPreprocessorBase):
     def __init__(self,
                  tokenizer: PreTrainedTokenizerBase,
                  max_completion_len: int,
@@ -70,15 +70,17 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
             return_attention_mask=False,
         )
 
-    def get_loss_mask(self, seq_len: int) -> torch.Tensor:
+    @staticmethod
+    def _get_partial_completion_mask(seq_len: int, completion_len: int, ratio: float) -> torch.Tensor:
         mask = torch.zeros(1, seq_len, dtype=torch.bool)
-        mask[:, -math.ceil(self.loss_ratio * seq_len):] = True
+        mask[:, -math.ceil(ratio * completion_len):] = True
         return mask
 
-    def get_completion_mask(self, seq_len: int, completion_len: int) -> torch.Tensor:
-        mask = torch.zeros(1, seq_len, dtype=torch.bool)
-        mask[:, -completion_len:] = True
-        return mask
+    def get_loss_mask(self, *args, **kwargs) -> torch.Tensor:
+        return self._get_partial_completion_mask(*args, **kwargs, ratio=self.loss_ratio)
+
+    def get_completion_mask(self, *args, **kwargs) -> torch.Tensor:
+        return self._get_partial_completion_mask(*args, **kwargs, ratio=1)
 
     @staticmethod
     def get_category_ids(seq_len: int,
@@ -155,7 +157,7 @@ class SplitPreprocessor(AmortizedPreprocessorBase):
         return PreprocessedBatch(
             input_ids=input_ids,
             target_ids=target_ids,
-            loss_mask=self.get_loss_mask(seq_len),
+            loss_mask=self.get_loss_mask(seq_len, completion_len),
             completion_mask=self.get_completion_mask(seq_len, completion_len),
             category_ids=self.get_category_ids(
                 seq_len=seq_len,

@@ -12,19 +12,21 @@ from functools import partial
 from typing import Literal
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from datasets import Dataset
 from torch.utils.data import DataLoader
 from tqdm.auto import trange, tqdm
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import PreTrainedTokenizerBase
 
 
 class UniversalTrainer(TrainerBase):
     def __init__(self,
-                 model: PreTrainedModel,
+                 model: nn.Module,
                  tokenizer: PreTrainedTokenizerBase,
                  train_ds: Dataset,
                  valid_ds: Dataset | None,
+                 add_valid_ds: Dataset | None,
                  # auxiliary objects
                  adapter: AdapterBase,
                  checkpointer: CheckpointManager,
@@ -89,14 +91,17 @@ class UniversalTrainer(TrainerBase):
         logger.message(f"Set the FP32 matrix multiplication precision to '{fp32_matmul_precision}'.")
 
         # validation
+        if valid_ds is None and add_valid_ds is not None:
+            raise ValueError('Do not use an additional validation slot unless you have filled the first one.')
         if valid_ds is None and valid_freq is None and not valid_metrics:
             self.valid_freq = float('inf')
             self.valid_dl = None
             self.logger.message('Validation is disabled.')
         elif valid_ds is not None and valid_freq is not None and valid_metrics:
             self.valid_freq = valid_freq
-            self.valid_dl = DataLoader(
-                dataset=valid_ds,
+
+            ds2dl = lambda x: DataLoader(
+                dataset=x,
                 batch_size=micro_batch_size,
                 shuffle=False,
                 num_workers=num_workers,
@@ -107,10 +112,12 @@ class UniversalTrainer(TrainerBase):
                 pin_memory_device=str(model.device),
             )
 
+            self.valid_dl = ds2dl(valid_ds)
+            self.add_valid_dl = ds2dl(add_valid_ds) if add_valid_ds is not None else None
+
             if valid_ema_alpha is None:
                 valid_ema_alpha = 1 - (1 - train_ema_alpha) ** valid_freq
                 self.logger.message(f'valid_ema_alpha automatically set to {valid_ema_alpha:.05f}.')
-
         else:
             raise ValueError('The valid_ds, valid_freq and valid_metrics arguments do not match each other.')
 
@@ -163,13 +170,17 @@ class UniversalTrainer(TrainerBase):
         self.valid_metrics = self.checkpointer.init_metrics('valid_metrics', valid_metrics, valid_ema_alpha)
 
     @torch.inference_mode
-    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
+    def validate(self, valid_dl: DataLoader | None, verbose: bool = True) -> dict[MetricName, MetricValue]:
+        if valid_dl is None:
+            return {}
+
+        is_additional = valid_dl is self.add_valid_dl
         training = self.model.training
         self.model.eval()
 
         valid_iter = tqdm(
-            iterable=self.valid_dl,
-            desc='Validation steps',
+            iterable=valid_dl,
+            desc='Additional validation steps' if is_additional else 'Validation steps',
             position=1,
             leave=None,
             disable=not verbose,
@@ -198,7 +209,10 @@ class UniversalTrainer(TrainerBase):
 
         locals_copy = locals().copy()
         locals_copy['trainer'] = locals_copy.pop('self')
-        valid_log = {name: metric.batch_commit(**locals_copy) for name, metric in self.valid_metrics.items()}
+        valid_log = {
+            f'{"additional_" if is_additional else ""}{name}': metric.batch_commit(**locals_copy)
+            for name, metric in self.valid_metrics.items()
+        }
 
         self.model.train(training)
         return valid_log
@@ -224,7 +238,9 @@ class UniversalTrainer(TrainerBase):
         )
 
         if self.start_iter == 0 and self.valid_dl is not None:
-            log = Log(iteration_number=0, valid_metrics=self.validate(verbose))
+            valid_log = self.validate(self.valid_dl, verbose)
+            valid_log |= self.validate(self.add_valid_dl, verbose)
+            log = Log(iteration_number=0, valid_metrics=valid_log)
             self.logger.log(log)
 
         for iter_num in pbar_iter:
@@ -281,7 +297,9 @@ class UniversalTrainer(TrainerBase):
             del locals_copy
 
             if (iter_num + 1) % self.valid_freq == 0:
-                log['valid_metrics'] = self.validate(verbose)
+                valid_log = self.validate(self.valid_dl, verbose)
+                valid_log |= self.validate(self.add_valid_dl, verbose)
+                log['valid_metrics'] = valid_log
             self.logger.log(log)
 
             if (iter_num + 1) % self.checkpointing_freq == 0:

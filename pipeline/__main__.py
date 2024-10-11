@@ -7,13 +7,14 @@ from pipeline.outputs.checkpointers.init import init_checkpointer
 from pipeline.outputs.loggers.init import init_logger
 from pipeline.trainers.init import init_trainer
 
+import copy
 import os
 import sys
 
 import hydra
 from datasets import load_dataset
 from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 LCA_SOLVERS_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -91,6 +92,34 @@ def main(config: DictConfig) -> None:
         tokenizer=tokenizer,
     )
 
+    if ('additional_composer' in config) != ('additional_preprocessor' in config):
+        raise ValueError('Both or neither of additional_composer and '
+                         'additional_preprocessor must be specified.')
+    elif (
+            (add_valid := ('additional_composer' in config)) and
+            (config_choices.get('composer') == config.additional_composer) and
+            (config_choices.get('preprocessor') == config.additional_preprocessor)
+    ):
+        raise ValueError('You are attempting to run validation twice '
+                         'using the same data preprocessing steps.')
+
+    add_composer = init_composer(
+        cls_name=os.path.dirname(config.additional_composer),
+        loaded_config=OmegaConf.load(
+            os.path.join(CONFIGS_DIR, f'composer/{config.additional_composer}.yaml')
+        ),
+        configs_dir=CONFIGS_DIR,
+        tokenizer=tokenizer,
+    ) if add_valid else None
+
+    add_preprocessor = init_preprocessor(
+        cls_name=os.path.dirname(config.additional_preprocessor),
+        loaded_config=OmegaConf.load(
+            os.path.join(CONFIGS_DIR, f'preprocessor/{config.additional_preprocessor}.yaml')
+        ),
+        tokenizer=tokenizer,
+    ) if add_valid else None
+
     logger = init_logger(
         cls_name=logger_cls,
         loaded_config=config.logger,
@@ -106,7 +135,11 @@ def main(config: DictConfig) -> None:
 
     dataset = load_dataset(**dict(config.dataset))
     train_ds, valid_ds = train_test_split(dataset, **dict(config.split))
-    set_transform(train_ds, valid_ds, composer, preprocessor)
+    add_valid_ds = copy.deepcopy(valid_ds) if add_valid else None
+
+    set_transform(train_ds, composer, preprocessor)
+    set_transform(valid_ds, composer, preprocessor)
+    set_transform(add_valid_ds, add_composer, add_preprocessor)
 
     trainer = init_trainer(
         cls_name=trainer_cls,
@@ -115,6 +148,7 @@ def main(config: DictConfig) -> None:
         tokenizer=tokenizer,
         train_ds=train_ds,
         valid_ds=valid_ds,
+        add_valid_ds=add_valid_ds,
         adapter=adapter,
         checkpointer=checkpointer,
         logger=logger)
