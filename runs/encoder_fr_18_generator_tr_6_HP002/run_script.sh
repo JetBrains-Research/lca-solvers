@@ -4,4 +4,4 @@ run_name=encoder_fr_18_generator_tr_6_HP002 \
 adapter=split_adapter/generator_6 \
 composer=split_composer/python_files_4k_32 \
 logger=wandb_logger/wandb_turrets \
-preprocessor=split_preprocessor/full_input_loss_4k_16k
+preprocessor=split_lm_preprocessor/full_input_loss_4k_16k
