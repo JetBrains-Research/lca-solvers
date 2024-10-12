@@ -2,7 +2,7 @@ from pipeline.configs.config_base import ConfigBase
 from pipeline.model.adapters.adapter_base import AdapterBase
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.loggers.logger_base import LoggerBase
-from pipeline.outputs.metrics.metric_base import MetricName
+from pipeline.outputs.metrics.statistic_base import StatisticBase
 
 from dataclasses import dataclass
 from typing import Literal
@@ -44,11 +44,9 @@ class UniversalTrainerConfig(ConfigBase):
     lr_decay_iters: int | None
     min_lr: float | None
 
-    # Metrics (see METRICS_REGISTRY in pipeline/outputs/metrics/metrics_registry.py)
-    train_metrics: list[MetricName]
-    train_ema_alpha: float  # (see ema_factory in pipeline/outputs/metrics/statistic_base.py)
-    valid_metrics: list[MetricName]  # empty list means no validation at all
-    valid_ema_alpha: float | None  # if None, will be calculated as 1 - (1 - train_ema_alpha) ** valid_freq
+    # Metrics
+    train_metrics: list[StatisticBase]
+    valid_metrics: list[StatisticBase]  # empty list means no validation at all
 
     # DataLoader
     shuffle: bool

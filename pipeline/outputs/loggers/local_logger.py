@@ -1,5 +1,5 @@
 from pipeline.outputs.loggers.logger_base import Message, Log, LoggerBase
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue
 
 import csv
 import json
@@ -107,7 +107,7 @@ class LocalLogger(LoggerBase):
         transformers_logger.handlers = self.logger.handlers
 
     @staticmethod
-    def write_metrics_to_csv(metrics: dict[MetricName, MetricValue], path: str) -> None:
+    def write_metrics_to_csv(metrics: dict[StatisticName, StatisticValue], path: str) -> None:
         with open(path, mode='a', newline='') as stream:
             writer = csv.DictWriter(stream, fieldnames=metrics.keys())
             if stream.tell() == 0:

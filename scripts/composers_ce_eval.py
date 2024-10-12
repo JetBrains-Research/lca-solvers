@@ -13,6 +13,7 @@ from pipeline.model.adapters.identity_adapter import IdentityAdapter
 from pipeline.model.init import init_tokenizer, init_model
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.checkpointers.data_structures import LoadingMode
+from pipeline.outputs.metrics.init import init_metrics
 from pipeline.trainers.validator import Validator
 
 import jsonlines
@@ -95,24 +96,28 @@ OUTPUT_FILE = 'extra/outputs/composers_ce_eval/checkpoint_comparison.jsonl'
 
 def main() -> None:
     checkpointer_config = CheckpointManagerConfig(
-        init_from=LoadingMode.SCRATCH,
+        init_from=LoadingMode.BEST,
         main_metric='cross_entropy',
         directory=...)
     checkpointer = CheckpointManager(**checkpointer_config.dict)
 
-    valid_metrics = checkpointer.init_metrics('valid_metrics', [
-        'cross_entropy',
-        'detached_cross_entropy',
-        'completion_cross_entropy',
-        'context_cross_entropy',
-        'full_cross_entropy',
-        'commited_cross_entropy',
-        'common_cross_entropy',
-        'infile_cross_entropy',
-        'inproject_cross_entropy',
-        'non_informative_cross_entropy',
-        'random_cross_entropy'])
-    checkpointer.init_from = LoadingMode.BEST
+    valid_metrics = init_metrics(
+        loaded_config=[
+            'cross_entropy/attached.yaml',
+            'cross_entropy/detached.yaml',
+            'cross_entropy/completion.yaml',
+            'cross_entropy/context.yaml',
+            'cross_entropy/full.yaml',
+            'cross_entropy/commited.yaml',
+            'cross_entropy/common.yaml',
+            'cross_entropy/infile.yaml',
+            'cross_entropy/inproject.yaml',
+            'cross_entropy/non_informative.yaml',
+            'cross_entropy/random.yaml',
+        ],
+        configs_dir='configs',
+        tokenizer=...,
+    )
 
     model_config = ModelConfig(
         tokenizer_name=MODEL_NAME,

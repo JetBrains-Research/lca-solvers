@@ -1,4 +1,5 @@
-from pipeline.outputs.metrics.statistic_base import StatisticValue, StatisticBase
+from pipeline.outputs.metrics.metric_base import OptimizationMode, MetricBase
+from pipeline.outputs.metrics.statistic_base import StatisticValue
 
 from typing import TypeVar, Type
 
@@ -10,8 +11,11 @@ T = TypeVar('T')
 UniversalTrainer = TypeVar('UniversalTrainer')
 
 
-class EpochCounter(StatisticBase):
+class EpochCounter(MetricBase):
     _instance = None  # singleton pattern
+    # it’s not a metric in the usual sense, but when used with main_metric in
+    # TopKCheckpointManager, it will result in saving only the last k checkpoints
+    mode = OptimizationMode.MAX
 
     def __new__(cls: Type[T], *args, **kwargs) -> T:
         if cls._instance is None:
@@ -23,7 +27,7 @@ class EpochCounter(StatisticBase):
         self.samples = 0
         self.ds_length = 1
 
-    def reinit(self, init_epoch: float | None) -> None:
+    def load_state(self, init_epoch: float | None) -> None:
         if init_epoch is not None:
             self.init_epoch = init_epoch
 

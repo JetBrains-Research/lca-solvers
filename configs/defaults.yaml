@@ -7,6 +7,7 @@ defaults:
   # +additional_composer: ...
   - dataset: train_A100_server
   - logger: wandb_logger/wandb_composers
+  - metrics: standard
   - model: dseek1p3
   - preprocessor: completion_loss_preprocessor/full_completion_loss_16k
   # +additional_preprocessor: ...

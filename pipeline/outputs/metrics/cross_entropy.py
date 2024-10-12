@@ -1,17 +1,20 @@
-from pipeline.outputs.metrics.metric_base import MetricValue, OptimizationMode, MetricBase
+from pipeline.outputs.metrics.metric_base import OptimizationMode, MaskBasedMetric
+from pipeline.outputs.metrics.statistic_base import StatisticValue
 
 import torch
 
 
-class CrossEntropy(MetricBase):
+class CrossEntropy(MaskBasedMetric):
     mode = OptimizationMode.MIN
 
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.mean_loss = 0
         self.num_tokens = 0
 
     @torch.inference_mode
-    def micro_batch_update(self, loss_per_token: torch.Tensor, mask: torch.Tensor, **_kwargs) -> None:
+    def micro_batch_update(self, loss_per_token: torch.Tensor, **kwargs) -> None:
+        mask = self.get_mask(**kwargs)
         loss_update = torch.nan_to_num(loss_per_token[mask].mean()).item()
         num_tokens_update = mask.sum().item()
 
@@ -26,7 +29,7 @@ class CrossEntropy(MetricBase):
 
         self.num_tokens += num_tokens_update
 
-    def batch_commit(self, **_kwargs) -> MetricValue:
+    def batch_commit(self, **_kwargs) -> StatisticValue:
         batch_metric = float('nan') if not self.num_tokens else self.mean_loss
         self.mean_loss = 0
         self.num_tokens = 0

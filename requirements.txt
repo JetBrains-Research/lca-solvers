@@ -14,3 +14,4 @@ einops==0.8.0
 matplotlib==3.9.0
 pandas==2.2.3
 numpy==1.26.4
+safetensors==0.4.5

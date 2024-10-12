@@ -1,6 +1,7 @@
 from pipeline.outputs.checkpointers.data_structures import LoadingMode, Checkpoint
 from pipeline.outputs.loggers.logger_base import Log
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, OptimizationMode, MetricBase
+from pipeline.outputs.metrics.metric_base import OptimizationMode
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue, StatisticBase
 from pipeline.outputs.metrics.metrics_registry import METRICS_REGISTRY
 
 import json
@@ -15,7 +16,7 @@ import torch
 class CheckpointManager:  # aka checkpointer
     def __init__(self,
                  init_from: LoadingMode | str,
-                 main_metric: MetricName,
+                 main_metric: StatisticName,
                  directory: str,
                  checkpoint_directory_template: str,
                  extract_iteration_number: Callable[[str], int],
@@ -48,7 +49,7 @@ class CheckpointManager:  # aka checkpointer
         with open(metrics_file) as stream:
             return Log(**json.load(stream))
 
-    def get_checkpoint_score(self, checkpoint_dir: str) -> MetricValue:
+    def get_checkpoint_score(self, checkpoint_dir: str) -> StatisticValue:
         checkpoint_dir = os.path.join(self.directory, checkpoint_dir)
         metrics = self.load_metrics(checkpoint_dir)
         metric_value = metrics.get('valid_metrics', metrics['train_metrics']).get(self.main_metric_name)
@@ -99,27 +100,6 @@ class CheckpointManager:  # aka checkpointer
         if checkpoint_dir is not None:
             optim_file = os.path.join(self.directory, checkpoint_dir, self._optim_state_filename)
             optimizer.load_state_dict(torch.load(optim_file))
-
-    def init_metrics(self,
-                     group: Literal['train_metrics', 'valid_metrics'],
-                     metrics: list[MetricName],
-                     ema_alpha: float | None = None,
-                     ) -> dict[MetricName, MetricBase]:
-        checkpoint_dir = self.get_checkpoint_directory()
-        metrics_dict = dict()
-
-        if checkpoint_dir is None:
-            metrics_states = dict()
-        else:
-            checkpoint_dir = os.path.join(self.directory, checkpoint_dir)
-            metrics_states = self.load_metrics(checkpoint_dir)[group]
-
-        for name in metrics:
-            init_args = [ema_alpha] if name.startswith('ema_') else list()
-            metrics_dict[name] = METRICS_REGISTRY[name](*init_args)
-            metrics_dict[name].reinit(metrics_states.get(name))
-
-        return metrics_dict
 
     def save_checkpoint(self, checkpoint: Checkpoint) -> None:
         checkpoint_dir = os.path.join(

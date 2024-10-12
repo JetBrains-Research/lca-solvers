@@ -1,36 +1,39 @@
-from pipeline.outputs.metrics.metric_base import MetricValue, OptimizationMode, MetricBase
-
-from typing import Type
+from pipeline.outputs.metrics.metric_base import OptimizationMode, MaskBasedMetric
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue
 
 import torch
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 
-def top_k_accuracy_factory(k: int) -> Type[MetricBase]:
-    class TopKAccuracy(MetricBase):
-        mode = OptimizationMode.MAX
+class TopKAccuracy(MaskBasedMetric):
+    mode = OptimizationMode.MAX
 
-        def __init__(self) -> None:
-            self.tp_plus_tn = 0
-            self.num_tokens = 0
+    def __init__(self, k: int, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.k = k
+        self.tp_plus_tn = 0
+        self.num_tokens = 0
 
-        @torch.inference_mode
-        def micro_batch_update(self,
-                               model_output: CausalLMOutputWithPast,
-                               target_ids: torch.Tensor,
-                               mask: torch.Tensor,
-                               **_kwargs,
-                               ) -> None:
-            logits = model_output.logits[mask]
-            target_ids = target_ids[mask].unsqueeze(-1)
-            pred_ids = logits.topk(k, dim=-1).indices
-            self.tp_plus_tn += (pred_ids == target_ids).any(-1).sum().item()
-            self.num_tokens += mask.sum().item()
+    @property
+    def name(self) -> StatisticName:
+        return super().name.replace('_k_', f'_{self.k}_')
 
-        def batch_commit(self, **_kwargs) -> MetricValue:
-            batch_metric = float('nan') if not self.num_tokens else (self.tp_plus_tn / self.num_tokens)
-            self.tp_plus_tn = 0
-            self.num_tokens = 0
-            return batch_metric
+    @torch.inference_mode
+    def micro_batch_update(self,
+                           model_output: CausalLMOutputWithPast,
+                           target_ids: torch.Tensor,
+                           **kwargs,
+                           ) -> None:
+        mask = self.get_mask(**kwargs)
+        logits = model_output.logits[mask]
+        target_ids = target_ids[mask].unsqueeze(-1)
+        pred_ids = logits.topk(self.k, dim=-1).indices
 
-    return TopKAccuracy
+        self.tp_plus_tn += (pred_ids == target_ids).any(-1).sum().item()
+        self.num_tokens += mask.sum().item()
+
+    def batch_commit(self, **_kwargs) -> StatisticValue:
+        batch_metric = float('nan') if not self.num_tokens else (self.tp_plus_tn / self.num_tokens)
+        self.tp_plus_tn = 0
+        self.num_tokens = 0
+        return batch_metric

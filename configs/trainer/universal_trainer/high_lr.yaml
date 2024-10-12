@@ -17,49 +17,6 @@ warmup_iters: 25
 lr_decay_iters: 600
 min_lr: 1.0e-7
 
-# Metrics
-train_metrics: [
-  cross_entropy,
-  detached_cross_entropy,
-  completion_cross_entropy,
-  context_cross_entropy,
-  full_cross_entropy,
-  commited_cross_entropy,
-  common_cross_entropy,
-  infile_cross_entropy,
-  inproject_cross_entropy,
-  non_informative_cross_entropy,
-  random_cross_entropy,
-
-  inproject_top_3_accuracy,
-  inproject_top_5_accuracy,
-  inproject_top_10_accuracy,
-
-  epoch,
-  learning_rate,
-]
-train_ema_alpha: 0.01
-valid_metrics: [
-  cross_entropy,
-  detached_cross_entropy,
-  completion_cross_entropy,
-  context_cross_entropy,
-  full_cross_entropy,
-  commited_cross_entropy,
-  common_cross_entropy,
-  infile_cross_entropy,
-  inproject_cross_entropy,
-  non_informative_cross_entropy,
-  random_cross_entropy,
-
-  inproject_top_3_accuracy,
-  inproject_top_5_accuracy,
-  inproject_top_10_accuracy,
-
-  epoch,
-]
-valid_ema_alpha: null
-
 # DataLoader
 shuffle: True
 drop_last: False

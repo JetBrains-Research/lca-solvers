@@ -5,6 +5,7 @@ from pipeline.model.adapters.init import init_adapter
 from pipeline.model.init import init_tokenizer_model
 from pipeline.outputs.checkpointers.init import init_checkpointer
 from pipeline.outputs.loggers.init import init_logger
+from pipeline.outputs.metrics.init import init_metrics
 from pipeline.trainers.init import init_trainer
 
 import copy
@@ -141,6 +142,16 @@ def main(config: DictConfig) -> None:
     set_transform(valid_ds, composer, preprocessor)
     set_transform(add_valid_ds, add_composer, add_preprocessor)
 
+    train_metrics = init_metrics(
+        loaded_config=config.metrics.train_metrics,
+        configs_dir=CONFIGS_DIR,
+        tokenizer=tokenizer)
+    valid_metrics = init_metrics(
+        loaded_config=config.metrics.valid_metrics,
+        configs_dir=CONFIGS_DIR,
+        tokenizer=tokenizer,
+    )
+
     trainer = init_trainer(
         cls_name=trainer_cls,
         loaded_config=config.trainer,
@@ -151,7 +162,9 @@ def main(config: DictConfig) -> None:
         add_valid_ds=add_valid_ds,
         adapter=adapter,
         checkpointer=checkpointer,
-        logger=logger)
+        logger=logger,
+        train_metrics=train_metrics,
+        valid_metrics=valid_metrics)
     trainer.train(verbose=True)
 
     logger.message('Run successfully completed.')

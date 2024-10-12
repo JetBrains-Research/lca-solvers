@@ -1,4 +1,4 @@
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue
 
 from abc import ABC, abstractmethod
 from typing import TypedDict, TypeVar, Type
@@ -11,8 +11,8 @@ Message = str | int | float | dict[str, JsonAllowedTypes]
 
 class Log(TypedDict):  # TODO: replace with dataclass
     iteration_number: int
-    train_metrics: NotRequired[dict[MetricName, MetricValue]]
-    valid_metrics: NotRequired[dict[MetricName, MetricValue]]
+    train_metrics: NotRequired[dict[StatisticName, StatisticValue]]
+    valid_metrics: NotRequired[dict[StatisticName, StatisticValue]]
 
 
 class LoggerBase(ABC):

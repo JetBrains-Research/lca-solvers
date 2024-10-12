@@ -1,4 +1,4 @@
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue
 
 from abc import ABC, abstractmethod
 
@@ -8,7 +8,7 @@ import torch
 class TrainerBase(ABC):
     @abstractmethod
     @torch.inference_mode
-    def validate(self, *args, **kwargs) -> dict[MetricName, MetricValue]:
+    def validate(self, *args, **kwargs) -> dict[StatisticName, StatisticValue]:
         raise NotImplementedError
 
     @abstractmethod

@@ -2,7 +2,7 @@ from pipeline.model.adapters.adapter_base import AdapterBase
 from pipeline.outputs.checkpointers.checkpointer import CheckpointManager
 from pipeline.outputs.checkpointers.data_structures import Checkpoint
 from pipeline.outputs.loggers.logger_base import Log, LoggerBase
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue, StatisticBase
 from pipeline.trainers.trainer_base import TrainerBase
 from pipeline.trainers.utils.fused_sampler import FusedSampler
 from pipeline.trainers.utils.schedulers import get_lr_from_cosine_scheduler_with_linear_warmup
@@ -48,10 +48,8 @@ class UniversalTrainer(TrainerBase):
                  lr_decay_iters: int | None,
                  min_lr: float | None,
                  # metrics
-                 train_metrics: list[MetricName],
-                 train_ema_alpha: float,
-                 valid_metrics: list[MetricName],
-                 valid_ema_alpha: float | None,
+                 train_metrics: list[StatisticBase],
+                 valid_metrics: list[StatisticBase],
                  # DataLoader
                  shuffle: bool,
                  drop_last: bool,
@@ -114,10 +112,6 @@ class UniversalTrainer(TrainerBase):
 
             self.valid_dl = ds2dl(valid_ds)
             self.add_valid_dl = ds2dl(add_valid_ds) if add_valid_ds is not None else None
-
-            if valid_ema_alpha is None:
-                valid_ema_alpha = 1 - (1 - train_ema_alpha) ** valid_freq
-                self.logger.message(f'valid_ema_alpha automatically set to {valid_ema_alpha:.05f}.')
         else:
             raise ValueError('The valid_ds, valid_freq and valid_metrics arguments do not match each other.')
 
@@ -166,11 +160,11 @@ class UniversalTrainer(TrainerBase):
             raise ValueError('The warmup_iters, lr_decay_iters and min_lr arguments do not match each other.')
 
         # metrics
-        self.train_metrics = self.checkpointer.init_metrics('train_metrics', train_metrics, train_ema_alpha)
-        self.valid_metrics = self.checkpointer.init_metrics('valid_metrics', valid_metrics, valid_ema_alpha)
+        self.train_metrics = train_metrics
+        self.valid_metrics = valid_metrics
 
     @torch.inference_mode
-    def validate(self, valid_dl: DataLoader | None, verbose: bool = True) -> dict[MetricName, MetricValue]:
+    def validate(self, valid_dl: DataLoader | None, verbose: bool = True) -> dict[StatisticName, StatisticValue]:
         if valid_dl is None:
             return {}
 
@@ -204,14 +198,14 @@ class UniversalTrainer(TrainerBase):
 
             locals_copy = locals().copy()
             locals_copy['trainer'] = locals_copy.pop('self')
-            [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
+            [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics]
             del locals_copy
 
         locals_copy = locals().copy()
         locals_copy['trainer'] = locals_copy.pop('self')
         valid_log = {
-            f'{"additional_" if is_additional else ""}{name}': metric.batch_commit(**locals_copy)
-            for name, metric in self.valid_metrics.items()
+            f'{"additional_" if is_additional else ""}{metric.name}': metric.batch_commit(**locals_copy)
+            for metric in self.valid_metrics
         }
 
         self.model.train(training)
@@ -273,7 +267,7 @@ class UniversalTrainer(TrainerBase):
 
                 locals_copy = locals().copy()
                 locals_copy['trainer'] = locals_copy.pop('self')
-                [metric.micro_batch_update(**locals_copy) for metric in self.train_metrics.values()]
+                [metric.micro_batch_update(**locals_copy) for metric in self.train_metrics]
                 del locals_copy
 
                 pbar_accumulation.update()
@@ -292,7 +286,7 @@ class UniversalTrainer(TrainerBase):
             locals_copy = locals().copy()
             locals_copy['trainer'] = locals_copy.pop('self')
             log = Log(iteration_number=iter_num + 1, train_metrics={
-                name: metric.batch_commit(**locals_copy) for name, metric in self.train_metrics.items()
+                metric.name: metric.batch_commit(**locals_copy) for metric in self.train_metrics
             })
             del locals_copy
 

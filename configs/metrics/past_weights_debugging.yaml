@@ -1,0 +1,8 @@
+train_metrics: [
+  cross_entropy/attached.yaml,
+
+  epoch/no_args.yaml,
+  lazy_statistic/learning_rate.yaml,
+  past_weights/no_args.yaml,
+]
+valid_metrics: []

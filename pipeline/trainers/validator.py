@@ -1,5 +1,5 @@
 from pipeline.model.adapters.adapter_base import AdapterBase
-from pipeline.outputs.metrics.metric_base import MetricName, MetricValue, MetricBase
+from pipeline.outputs.metrics.statistic_base import StatisticName, StatisticValue, StatisticBase
 from pipeline.trainers.trainer_base import TrainerBase
 
 import torch
@@ -14,7 +14,7 @@ class Validator(TrainerBase):
     def __init__(self,
                  model: nn.Module,
                  adapter: AdapterBase,
-                 valid_metrics: dict[MetricName, MetricBase],
+                 valid_metrics: list[StatisticBase],
                  valid_ds: Dataset,
                  batch_size: int,
                  num_workers: int,
@@ -35,7 +35,7 @@ class Validator(TrainerBase):
         )
 
     @torch.inference_mode
-    def validate(self, verbose: bool = True) -> dict[MetricName, MetricValue]:
+    def validate(self, verbose: bool = True) -> dict[StatisticName, StatisticValue]:
         training = self.model.training
         self.model.eval()
 
@@ -64,12 +64,12 @@ class Validator(TrainerBase):
 
             locals_copy = locals().copy()
             locals_copy['trainer'] = locals_copy.pop('self')
-            [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics.values()]
+            [metric.micro_batch_update(**locals_copy) for metric in self.valid_metrics]
             del locals_copy
 
         locals_copy = locals().copy()
         locals_copy['trainer'] = locals_copy.pop('self')
-        valid_log = {name: metric.batch_commit(**locals_copy) for name, metric in self.valid_metrics.items()}
+        valid_log = {metric.name: metric.batch_commit(**locals_copy) for metric in self.valid_metrics}
 
         self.model.train(training)
         return valid_log

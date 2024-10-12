@@ -1,6 +1,6 @@
 from pipeline.configs.config_base import ConfigBase
 from pipeline.outputs.checkpointers.data_structures import LoadingMode
-from pipeline.outputs.metrics.metric_base import MetricName
+from pipeline.outputs.metrics.statistic_base import StatisticName
 
 from dataclasses import dataclass
 from typing import Callable
@@ -9,7 +9,7 @@ from typing import Callable
 @dataclass
 class CheckpointManagerConfig(ConfigBase):
     init_from: LoadingMode | str
-    main_metric: MetricName
+    main_metric: StatisticName
     directory: str
 
     # if you want to change it, override the following function accordingly
