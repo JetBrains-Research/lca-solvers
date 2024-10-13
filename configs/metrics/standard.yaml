@@ -1,3 +1,5 @@
+# TODO: get rid of unnecessary
+
 train_metrics: [
   cross_entropy/attached.yaml,
   cross_entropy/detached.yaml,

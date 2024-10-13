@@ -1,5 +1,6 @@
 from pipeline.outputs.metrics.counters import EpochCounter
 from pipeline.outputs.metrics.cross_entropy import CrossEntropy
+from pipeline.outputs.metrics.exact_match import ExactMatch
 from pipeline.outputs.metrics.model_statistics import PastWeights
 from pipeline.outputs.metrics.statistic_base import LazyStatistic
 from pipeline.outputs.metrics.top_k_accuracy import TopKAccuracy
@@ -7,6 +8,7 @@ from pipeline.outputs.metrics.top_k_accuracy import TopKAccuracy
 METRICS_REGISTRY = {
     # metrics
     'cross_entropy': CrossEntropy,
+    'exact_match': ExactMatch,
     'top_k_accuracy': TopKAccuracy,
 
     # statistics
