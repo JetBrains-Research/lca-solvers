@@ -52,17 +52,19 @@ class ExactMatch(MaskBasedMetric):
             line_logits = logits[start_idx:(start_idx + line_length)]
             pred_line = line_logits.argmax(-1).tolist()
 
-            short_line = (line_length < self.min_tokens)
-            interruption = bool(self.set_newline_ids & set(pred_line[:(self.min_tokens - 1)]))
-
-            if not short_line and interruption:  # give the model a second chance
-                line_logits[:(self.min_tokens - 1), self.list_newline_ids] = -torch.inf
-                pred_line = line_logits.argmax(-1).tolist()
-
             start_idx += line_length
 
+            interruption = bool(self.set_newline_ids & set(pred_line[:(self.min_tokens - 1)]))
+            short_line = (line_length < self.min_tokens)
+
+            if interruption and not short_line:  # give the model a second chance
+                line_logits[:(self.min_tokens - 1), self.list_newline_ids] = -torch.inf
+                pred_line = line_logits.argmax(-1).tolist()
+            elif interruption and short_line:
+                continue  # ignore model performance on uninteresting lines
+
             self.num_matches += (pred_line == line)
-        self.num_lines += len(gt_line_ids)
+            self.num_lines += 1
 
     def batch_commit(self, **_kwargs) -> StatisticValue:
         batch_metric = float('nan') if not self.num_lines else (self.num_matches / self.num_lines)

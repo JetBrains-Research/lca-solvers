@@ -1,5 +1,5 @@
 from pipeline.outputs.metrics.metric_base import OptimizationMode, MetricBase
-from pipeline.outputs.metrics.statistic_base import StatisticValue
+from pipeline.outputs.metrics.statistic_base import StatisticValue, StatisticName
 
 from typing import TypeVar, Type
 
@@ -26,6 +26,10 @@ class EpochCounter(MetricBase):
         self.init_epoch = 0  # for resumption
         self.samples = 0
         self.ds_length = 1
+
+    @property
+    def name(self) -> StatisticName:
+        return 'epoch'
 
     def load_state(self, init_epoch: float | None) -> None:
         if init_epoch is not None:

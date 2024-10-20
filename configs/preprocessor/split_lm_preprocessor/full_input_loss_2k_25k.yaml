@@ -2,3 +2,4 @@ max_completion_len: 1792
 max_seq_len: 25088
 loss_ratio: 1
 num_chars_per_token: 6
+use_sep_token: False

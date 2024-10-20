@@ -1,6 +1,8 @@
 train_metrics: [
+  # Training Decomposed Cross-entropy
   cross_entropy/attached.yaml,
 
+  # Training Statistics
   epoch/no_args.yaml,
   lazy_statistic/learning_rate.yaml,
   past_weights/no_args.yaml,

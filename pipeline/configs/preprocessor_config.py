@@ -24,4 +24,5 @@ class SplitPreprocessorConfig(ConfigBase):
     max_seq_len: int
     loss_ratio: float
     num_chars_per_token: int
+    use_sep_token: bool
     verbose: bool = True

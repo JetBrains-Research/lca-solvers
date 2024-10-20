@@ -21,6 +21,8 @@ class WandbLogger(LocalLogger):
         wandb.init(**wandb_init_kwargs)
 
     def log(self, metrics: Log) -> Log:
+        # TODO: nesting: don't forget the additional validation loop case
+
         if metrics['iteration_number'] <= self.last_logged_iter:
             return super().log(metrics)  # repeated iterations between checkpoints
 

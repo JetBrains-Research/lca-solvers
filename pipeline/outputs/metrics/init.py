@@ -13,7 +13,9 @@ def init_metrics(loaded_config: Iterable[StatisticName],
                  tokenizer: PreTrainedTokenizerBase,
                  ) -> list[StatisticBase]:
     # TODO: additional validation loop is not considered
-    metrics = list()
+    # dictionary solves the problem of using the same metric names multiple times:
+    # only the last metric specified in the configuration will be used
+    metrics = dict()
 
     for path in loaded_config:
         full_path = os.path.join(configs_dir, 'metrics/metrics', path)
@@ -30,6 +32,6 @@ def init_metrics(loaded_config: Iterable[StatisticName],
             metric_config['tokenizer'] = tokenizer
 
         metric = metric_cls(**metric_config)
-        metrics.append(metric)
+        metrics[metric.name] = metric
 
-    return metrics
+    return list(metrics.values())

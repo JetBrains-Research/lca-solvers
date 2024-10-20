@@ -45,12 +45,14 @@ class CombinedModel(nn.Module):
                  encoder: nn.Module,
                  generator: nn.Module,
                  simplified_rope: bool,
+                 sequential_encoder: bool,
                  freeze_encoder: bool,
                  ) -> None:
         super().__init__()
         self.encoder = encoder
         self.generator = generator
         self.simplified_rope = simplified_rope
+        self.sequential_encoder = sequential_encoder
         self.freeze_encoder = freeze_encoder
 
     @property
@@ -84,47 +86,99 @@ class CombinedModel(nn.Module):
             self.encoder.save_pretrained(os.path.join(save_directory, 'encoder'))
         self.generator.save_pretrained(os.path.join(save_directory, 'generator'))
 
+    def get_position_ids(self, block_sizes: torch.Tensor, max_seq_len: int) -> torch.Tensor | None:
+        if not self.simplified_rope:
+            return None
+
+        position_ids = torch.arange(block_sizes.max().item(), dtype=torch.long)
+        position_ids = position_ids.repeat(block_sizes.shape[0], 1)
+        position_ids = position_ids[position_ids < block_sizes.unsqueeze(-1)]
+        position_ids = position_ids[None, -max_seq_len:]
+        return position_ids
+
+    def batch_encode(self,
+                     input_ids: torch.Tensor,
+                     attention_mask: torch.Tensor | None,
+                     max_seq_len: int,
+                     ) -> torch.Tensor:
+        encoder_output = self.encoder(input_ids, attention_mask)
+        hidden_states = encoder_output.last_hidden_state
+        bos_hidden_state = hidden_states[0, 0]
+
+        if attention_mask is None:
+            attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
+        else:
+            attention_mask = attention_mask.bool()
+        attention_mask[1:, 0] = False  # remove BOS embeddings except for the first one
+
+        inputs_embeds = hidden_states[attention_mask][-max_seq_len:]
+        inputs_embeds[0] = bos_hidden_state
+        inputs_embeds = inputs_embeds.unsqueeze(0)
+        return inputs_embeds
+
+    def sequential_encode(self,
+                          input_ids: torch.Tensor,
+                          block_sizes: torch.Tensor,
+                          max_seq_len: int,
+                          ) -> torch.Tensor:
+        block_sizes = block_sizes.tolist()
+        hidden_states = list()
+
+        for i, block_size in enumerate(block_sizes):
+            # helps avoid OOM during encoder training
+            calc_grad = (i != 0) or sum(block_sizes) <= max_seq_len
+
+            with (torch.no_grad, nullcontext)[calc_grad]():
+                encoder_output = self.encoder(input_ids[[i], :block_size])
+                block_hs = encoder_output.last_hidden_state[0, (i != 0):]
+
+            hidden_states.append(block_hs)
+        hidden_states = torch.concat(hidden_states)
+        bos_hidden_state = hidden_states[0]
+
+        inputs_embeds = hidden_states[-max_seq_len:]
+        inputs_embeds[0] = bos_hidden_state
+        inputs_embeds = inputs_embeds.unsqueeze(0)
+        return inputs_embeds
+
     def forward(self,
                 input_ids: torch.Tensor,
                 attention_mask: torch.Tensor | None,
                 max_seq_len: int,
                 ) -> CausalLMOutputWithPast:
+        if attention_mask is not None:
+            block_sizes = attention_mask.sum(-1)
+        else:
+            block_sizes = torch.full(
+                size=(input_ids.shape[0],),
+                fill_value=input_ids.shape[-1],
+                device=self.device,
+            )
+
         with (nullcontext, torch.inference_mode)[self.freeze_encoder]():
-            encoder_output = self.encoder(input_ids, attention_mask)
-            hidden_states = encoder_output.last_hidden_state
-            bos_hidden_state = hidden_states[0, 0]
-
-            if attention_mask is None:
-                attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
+            if self.sequential_encoder:
+                inputs_embeds = self.sequential_encode(input_ids, block_sizes, max_seq_len)
             else:
-                attention_mask = attention_mask.bool()
-            attention_mask[1:, 0] = False  # remove BOS embeddings except for the first one
+                inputs_embeds = self.batch_encode(input_ids, attention_mask, max_seq_len)
 
-            inputs_embeds = hidden_states[attention_mask][-max_seq_len:]
-            inputs_embeds[0] = bos_hidden_state
-            inputs_embeds = inputs_embeds.unsqueeze(0)
-
-            if self.simplified_rope:
-                position_ids = torch.arange(attention_mask.shape[-1], dtype=torch.long, device=self.device)
-                position_ids = position_ids.repeat(attention_mask.shape[0], 1)
-                position_ids[1:] -= 1
-                position_ids = position_ids[attention_mask][-max_seq_len:]
-                position_ids = position_ids.unsqueeze(0)
-            else:
-                position_ids = None
-
-        return self.generator(inputs_embeds=inputs_embeds, position_ids=position_ids)
+        block_sizes[1:] -= 1
+        return self.generator(
+            inputs_embeds=inputs_embeds,
+            position_ids=self.get_position_ids(block_sizes, max_seq_len),
+        )
 
 
 class SplitAdapter(AdapterBase):
     def __init__(self,
                  num_gen_layers: int,
                  simplified_rope: bool,
+                 sequential_encoder: bool,
                  *args, **kwargs,
                  ) -> None:
         super().__init__(*args, **kwargs)
         self.num_gen_layers = num_gen_layers
         self.simplified_rope = simplified_rope
+        self.sequential_encoder = sequential_encoder
 
     def get_args_kwargs(self,
                         input_ids: torch.Tensor,
@@ -156,5 +210,5 @@ class SplitAdapter(AdapterBase):
         if freeze_encoder:
             encoder = encoder.eval().requires_grad_(False)
 
-        model = CombinedModel(encoder, generator, self.simplified_rope, freeze_encoder)
+        model = CombinedModel(encoder, generator, self.simplified_rope, self.sequential_encoder, freeze_encoder)
         return model

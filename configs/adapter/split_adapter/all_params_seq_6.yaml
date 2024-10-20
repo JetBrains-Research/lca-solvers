@@ -1,4 +1,4 @@
 params_pattern: null
 num_gen_layers: 6
 simplified_rope: False
-sequential_encoder: False
+sequential_encoder: True

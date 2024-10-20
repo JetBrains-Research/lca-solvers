@@ -21,6 +21,7 @@ class SplitCompletionLossPreprocessor(AmortizedPreprocessorBase):
                  max_seq_len: int,
                  loss_ratio: float,
                  num_chars_per_token: int,
+                 use_sep_token: bool,  # appended to each context block
                  verbose: bool,
                  ) -> None:
         super().__init__(num_chars_per_token, verbose)
@@ -36,6 +37,7 @@ class SplitCompletionLossPreprocessor(AmortizedPreprocessorBase):
         self.max_completion_len = max_completion_len
         self.max_seq_len = max_seq_len
         self.loss_ratio = loss_ratio
+        self.use_sep_token = use_sep_token
 
     def tokenize_composed_completion(self, completion_block: str) -> BatchEncoding:
         char_trunc_upper_bound = self.num_chars_per_token * self.max_completion_len
@@ -64,11 +66,17 @@ class SplitCompletionLossPreprocessor(AmortizedPreprocessorBase):
         return tokenized_completion
 
     def tokenize_composed_context(self, context_blocks: list[str]) -> BatchEncoding:
-        return self.tokenizer(
+        tokenized_context = self.tokenizer(
             text=context_blocks,
             add_special_tokens=False,
             return_attention_mask=False,
         )
+
+        if self.use_sep_token:
+            for block in tokenized_context.input_ids:
+                block.append(self.tokenizer.sep_token_id)
+
+        return tokenized_context
 
     @staticmethod
     def _get_partial_completion_mask(seq_len: int, completion_len: int, ratio: float) -> torch.Tensor:
