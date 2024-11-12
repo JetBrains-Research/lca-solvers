@@ -23,7 +23,7 @@ class RepoSnapshot(TypedDict):
 
 
 @dataclass
-class Datapoint:
+class OldDatapoint:
     repo: str
     commit_hash: str
     completion_file: CompletionFile
@@ -32,11 +32,35 @@ class Datapoint:
     completion_lines_raw: CompletionLines | None = None
 
     def recalculate_random_category(self) -> None:
-        non_categorized_lines = set(range(self.completion_file['content'].count('\n') + 1))
-        for category, lines in self.completion_lines.items():
-            if category != 'random':
-                non_categorized_lines.difference_update(lines)
-        self.completion_lines['random'] = list(non_categorized_lines)
+        pass
+
+
+def Datapoint(repo: str,
+              commit_hash: str,
+              filename: str,
+              content: str,
+              **_kwargs,
+              ) -> OldDatapoint:
+    return OldDatapoint(
+        repo=repo,
+        commit_hash=commit_hash,
+        completion_file=CompletionFile(
+            filename=filename,
+            content=content,
+        ),
+        completion_lines=CompletionLines(
+            commited=[],
+            common=[],
+            infile=[],
+            inproject=[],
+            non_informative=[],
+            random=[],
+        ),
+        repo_snapshot=RepoSnapshot(
+            filename=[],
+            content=[],
+        ),
+    )
 
 
 class BatchDatapoint(TypedDict):

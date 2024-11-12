@@ -2,7 +2,7 @@ from pipeline.configs.checkpointer_config import CheckpointManagerConfig
 from pipeline.configs.model_config import ModelConfig
 from pipeline.data.composers.blocks.chunk_ranking import *
 from pipeline.data.composers.init import init_composer
-from pipeline.data.dataset import train_test_split, set_transform
+from pipeline.data.dataset.split import train_test_split, set_transform
 from pipeline.data.preprocessors.init import init_preprocessor
 from pipeline.environment.hardware import get_free_device
 from pipeline.model.init import init_tokenizer

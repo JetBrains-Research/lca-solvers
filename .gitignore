@@ -7,6 +7,7 @@ runs/**/checkpoints
 runs/**/logs/stderr.json
 runs/**/logs/stdout.json
 runs/test
+pipeline/data/extension/token_dist.json
 scripts/outputs/optimal_retrieve_indexation/raw
 wandb
 venv

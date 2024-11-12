@@ -1,5 +1,7 @@
 from pipeline.data.composers.init import init_composer
-from pipeline.data.dataset import train_test_split, set_transform
+from pipeline.data.dataset.best_fit_packing_dataset import BestFitPackingDataset
+from pipeline.data.dataset.split import train_test_split, set_transform
+from pipeline.data.extension.data_loading.lca_dataset import LCADataset
 from pipeline.data.preprocessors.init import init_preprocessor
 from pipeline.model.adapters.init import init_adapter
 from pipeline.model.init import init_tokenizer_model
@@ -9,11 +11,11 @@ from pipeline.outputs.metrics.init import init_metrics
 from pipeline.trainers.init import init_trainer
 
 import copy
+import json
 import os
 import sys
 
 import hydra
-from datasets import load_dataset
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 
@@ -134,11 +136,35 @@ def main(config: DictConfig) -> None:
     else:
         logger.message(f'The model is initialized from {load_from}.')
 
-    dataset = load_dataset(**dict(config.dataset))
+    with open('pipeline/data/extension/token_dist.json') as stream:
+        token_dist = json.load(stream)
+
+    token_dist = {
+        doc_id: doc_tok_dist for doc_id, doc_tok_dist in token_dist.items()
+        if 200 <= sum(doc_tok_dist['content']) <= 8000
+    }
+
+    dataset = LCADataset(**dict(config.dataset)).get_completion_files()
+    dataset = dataset.select({
+        dp_idx for dp_idx, doc_id in enumerate(dataset['datapoint_identifier'])
+        if doc_id in token_dist
+    })
     train_ds, valid_ds = train_test_split(dataset, **dict(config.split))
     add_valid_ds = copy.deepcopy(valid_ds) if add_valid else None
 
-    set_transform(train_ds, composer, preprocessor)
+    train_document_ids = set(train_ds['datapoint_identifier'])
+    train_ds = BestFitPackingDataset(
+        hf_dataset=train_ds,
+        tokenizer=tokenizer,
+        max_seq_len=config.preprocessor.max_seq_len,
+        delimiter='\n',
+        token_dist={
+            doc_id: doc_tok_dist for doc_id, doc_tok_dist in token_dist.items()
+            if doc_id in train_document_ids
+        },
+        cache_dir='pipeline/data/extension',
+        verbose=True,
+        random_seed=config.trainer.random_seed)
     set_transform(valid_ds, composer, preprocessor)
     set_transform(add_valid_ds, add_composer, add_preprocessor)
 

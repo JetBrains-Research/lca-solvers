@@ -1,8 +1,8 @@
 # Iteration parameters
-max_iters: 1440
-valid_freq: 60
-checkpointing_freq: 60
-gradient_accumulation_steps: 64
+max_iters: 720
+valid_freq: 30
+checkpointing_freq: 30
+gradient_accumulation_steps: 128
 micro_batch_size: 1
 
 # AdamW optimizer
@@ -13,8 +13,8 @@ weight_decay: 0.01
 max_grad_norm: 2
 
 # Cosine lr scheduler with warmup
-warmup_iters: 120
-lr_decay_iters: 1440
+warmup_iters: 60
+lr_decay_iters: 720
 min_lr: 5.0e-8
 
 # DataLoader

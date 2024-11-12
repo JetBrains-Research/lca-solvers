@@ -119,7 +119,7 @@ class UniversalTrainer(TrainerBase):
         sampler = FusedSampler(
             start_sample_idx=(self.batch_size * self.start_iter),
             end_sample_idx=(self.batch_size * max_iters),
-            dataset_length=len(train_ds),
+            dataset_length=(self.batch_size * max_iters),  # BFP fork specific line
         ) if shuffle else None
 
         self.train_dl = DataLoader(
