@@ -1,0 +1,12 @@
+max_block_size: 4096
+max_num_blocks: 32
+block_sep: "\n\n"
+recalculate_random_category: True
+
+block_configs: [
+  file_filtering/empty_file_filter/no_args.yaml,
+  file_filtering/inclusive_file_extension_filter/python_files.yaml,
+  file_chunking/file_grained_chunker/no_args.yaml,
+  chunk_ranking/negative_path_distance_ranker/no_args.yaml,
+  chunk_sorting/lexicographic_sorter/no_args.yaml,
+]

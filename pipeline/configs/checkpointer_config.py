@@ -1,0 +1,30 @@
+from pipeline.configs.config_base import ConfigBase
+from pipeline.outputs.checkpointers.data_structures import LoadingMode
+from pipeline.outputs.metrics.statistic_base import StatisticName
+
+from dataclasses import dataclass
+from typing import Callable
+
+
+@dataclass
+class CheckpointManagerConfig(ConfigBase):
+    init_from: LoadingMode | str
+    main_metric: StatisticName
+    directory: str
+
+    # if you want to change it, override the following function accordingly
+    checkpoint_directory_template: str = '{iteration_number:04d}'
+    extract_iteration_number: Callable[[str], int] = staticmethod(int)
+
+    model_subdirectory: str = 'model'
+    optim_state_filename: str = 'optim.pt'
+    metrics_filename: str = 'metrics.json'  # should be .json
+
+    def __post_init__(self) -> None:
+        if self.init_from in set(LoadingMode):
+            self.init_from = LoadingMode(self.init_from)
+
+
+@dataclass(kw_only=True)
+class TopKCheckpointManagerConfig(CheckpointManagerConfig):
+    max_checkpoints_num: int

@@ -1,0 +1,2 @@
+init_from: best
+main_metric: cross_entropy

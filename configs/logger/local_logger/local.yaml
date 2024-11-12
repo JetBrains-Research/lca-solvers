@@ -1,0 +1,4 @@
+train_csv: train.csv
+valid_csv: valid.csv
+stdout_file: stdout.json
+stderr_file: stderr.json

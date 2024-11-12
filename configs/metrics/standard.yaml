@@ -1,0 +1,85 @@
+train_metrics: [
+  # train/cross_entropy/decomposed/...
+  cross_entropy/attached.yaml,
+  cross_entropy/detached.yaml,
+  cross_entropy/completion.yaml,
+  cross_entropy/context.yaml,
+  cross_entropy/full.yaml,
+
+  # train/cross_entropy/categorized/...
+  cross_entropy/InCommit.yaml,
+  cross_entropy/InFile.yaml,
+  cross_entropy/InProject.yaml,
+  cross_entropy/NonInformative.yaml,
+  cross_entropy/Other.yaml,
+  cross_entropy/OtherAPI.yaml,
+  cross_entropy/TODO.yaml,
+
+  # train/exact_match/decomposed/...
+  exact_match/attached_3.yaml,
+  exact_match/detached_3.yaml,
+  exact_match/completion_3.yaml,
+  exact_match/context_3.yaml,
+  exact_match/full_3.yaml,
+
+  # train/exact_match/categorized/...
+  exact_match/InCommit_3.yaml,
+  exact_match/InFile_3.yaml,
+  exact_match/InProject_3.yaml,
+  exact_match/NonInformative_3.yaml,
+  exact_match/Other_3.yaml,
+  exact_match/OtherAPI_3.yaml,
+  exact_match/TODO_3.yaml,
+
+  # train/top_k_accuracy/categorized/...
+  top_k_accuracy/InProject_1.yaml,
+  top_k_accuracy/InProject_3.yaml,
+  top_k_accuracy/InProject_5.yaml,
+  top_k_accuracy/InProject_10.yaml,
+
+  # train/statistics/...
+  epoch/no_args.yaml,
+  lazy_statistic/learning_rate.yaml,
+]
+valid_metrics: [
+  # valid/cross_entropy/decomposed/...
+  cross_entropy/attached.yaml,
+  cross_entropy/detached.yaml,
+  cross_entropy/completion.yaml,
+  cross_entropy/context.yaml,
+  cross_entropy/full.yaml,
+
+  # valid/cross_entropy/categorized/...
+  cross_entropy/InCommit.yaml,
+  cross_entropy/InFile.yaml,
+  cross_entropy/InProject.yaml,
+  cross_entropy/NonInformative.yaml,
+  cross_entropy/Other.yaml,
+  cross_entropy/OtherAPI.yaml,
+  cross_entropy/TODO.yaml,
+
+  # valid/exact_match/decomposed/...
+  exact_match/attached_3.yaml,
+  exact_match/detached_3.yaml,
+  exact_match/completion_3.yaml,
+  exact_match/context_3.yaml,
+  exact_match/full_3.yaml,
+
+  # valid/exact_match/categorized/...
+  exact_match/InCommit_3.yaml,
+  exact_match/InFile_3.yaml,
+  exact_match/InProject_3.yaml,
+  exact_match/NonInformative_3.yaml,
+  exact_match/Other_3.yaml,
+  exact_match/OtherAPI_3.yaml,
+  exact_match/TODO_3.yaml,
+
+  # valid/top_k_accuracy/categorized/...
+  top_k_accuracy/InProject_1.yaml,
+  top_k_accuracy/InProject_3.yaml,
+  top_k_accuracy/InProject_5.yaml,
+  top_k_accuracy/InProject_10.yaml,
+
+  # valid/statistics/...
+  epoch/no_args.yaml,
+]

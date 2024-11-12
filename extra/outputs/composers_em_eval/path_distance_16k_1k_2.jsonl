@@ -1,0 +1,76 @@
+{
+    "category": {
+        "0": "InFile",
+        "1": "InProject",
+        "2": "OtherAPI"
+    },
+    "scope": {
+        "0": "medium_context",
+        "1": "medium_context",
+        "2": "medium_context"
+    },
+    "count": {
+        "0": 540,
+        "1": 1250,
+        "2": 2000
+    },
+    "context_len_mean": {
+        "0": 790.4777777778,
+        "1": 647.3848,
+        "2": 756.723
+    },
+    "scores": {
+        "0": {
+            "exact_match": {
+                "sum": 167,
+                "mean": 0.3092592593
+            },
+            "exact_match_strip": {
+                "sum": 174,
+                "mean": 0.3222222222
+            },
+            "exact_match_valid": {
+                "sum": 173,
+                "mean": 0.3203703704
+            }
+        },
+        "1": {
+            "exact_match": {
+                "sum": 393,
+                "mean": 0.3144
+            },
+            "exact_match_strip": {
+                "sum": 416,
+                "mean": 0.3328
+            },
+            "exact_match_valid": {
+                "sum": 415,
+                "mean": 0.332
+            }
+        },
+        "2": {
+            "exact_match": {
+                "sum": 654,
+                "mean": 0.327
+            },
+            "exact_match_strip": {
+                "sum": 701,
+                "mean": 0.3505
+            },
+            "exact_match_valid": {
+                "sum": 701,
+                "mean": 0.3505
+            }
+        }
+    },
+    "time_per_item": {
+        "0": 0.0287714668,
+        "1": 0.0287714668,
+        "2": 0.0287714668
+    },
+    "context_len_config": {
+        "0": 16384,
+        "1": 16384,
+        "2": 16384
+    }
+}
